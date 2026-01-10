@@ -1,4 +1,4 @@
-package com.example.meezy.config;
+package com.example.meezy.config.exception;
 
 import com.example.meezy.bc.sharedkernel.exception.CustomException;
 import com.example.meezy.bc.sharedkernel.exception.ErrorCode;
