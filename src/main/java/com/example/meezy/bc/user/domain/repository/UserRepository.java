@@ -1,0 +1,21 @@
+package com.example.meezy.bc.user.domain.repository;
+
+import com.example.meezy.bc.user.domain.User;
+import com.example.meezy.bc.user.domain.type.OauthProvider;
+import com.example.meezy.bc.user.domain.vo.UserId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UserId> {
+    Optional<User> findByEmailAndOauthProvider(String email, OauthProvider oauthProvider);
+    Optional<User> findByAccountId(String accountId);
+    Optional<User> findByUserId_Value(UUID userId);
+    Optional<User> findByUserId(UserId userId);
+
+    boolean existsByAccountId(String accountId);
+    boolean existsByEmailAndOauthProvider(String email, OauthProvider oauthProvider);
+}
