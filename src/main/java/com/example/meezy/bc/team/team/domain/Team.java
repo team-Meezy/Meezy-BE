@@ -23,9 +23,11 @@ import java.util.List;
 public class Team extends AbstractAggregateRoot {
 
     @EmbeddedId
+    @AttributeOverride(name = "value", column = @Column(name = "team_id"))
     private TeamId teamId;
 
     @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "user_id"))
     private UserId leaderId;
 
     @Column(nullable = false)
@@ -37,6 +39,7 @@ public class Team extends AbstractAggregateRoot {
     @Embedded
     private InviteCode inviteCode;
 
+    @Builder.Default
     @OneToMany(
             mappedBy = "team",
             cascade = CascadeType.ALL,
@@ -57,13 +60,8 @@ public class Team extends AbstractAggregateRoot {
         return team;
     }
 
-    public void addMember(UserId requesterId, UserId newMemberId, Role role) {
-        validateLeaderPermission(requesterId);
-        validateNotDuplicateMember(newMemberId);
-
-        members.add(
-                TeamMember.create(newMemberId, role, this)
-        );
+    public void validateCanDelete(UserId userId){
+        validateLeaderPermission(userId);
     }
 
     public void removeMember(UserId requesterId, TeamMemberId memberId) {
@@ -75,17 +73,20 @@ public class Team extends AbstractAggregateRoot {
         members.remove(member);
     }
 
-    public void generateInviteCode(UserId requesterId) {
+    public InviteCode generateInviteCode(UserId requesterId) {
         validateLeaderPermission(requesterId);
-        this.inviteCode = InviteCode.generate();
+        InviteCode inViteCode = InviteCode.generate();
+        this.inviteCode = inViteCode;
+        return inViteCode;
     }
 
-    public void joinByInviteCode(InviteCode inviteCode, UserId userId) {
+    public void joinByInviteCode(String inviteCode, UserId userId) {
         validateInviteCode(inviteCode);
         validateNotDuplicateMember(userId);
 
-        TeamMember newMember = TeamMember.create(userId, Role.MEMBER, this);
-        members.add(newMember);
+        members.add(
+                TeamMember.create(userId, Role.MEMBER, this)
+        );
     }
 
     public void changeName(UserId requesterId, String newName) {
@@ -143,7 +144,7 @@ public class Team extends AbstractAggregateRoot {
         }
     }
 
-    private void validateInviteCode(InviteCode inviteCode) {
+    private void validateInviteCode(String inviteCode) {
         if (this.inviteCode == null || this.inviteCode.code() == null) {
             throw new InviteCodeNotGeneratedException();
         }
@@ -152,7 +153,7 @@ public class Team extends AbstractAggregateRoot {
             throw new InviteCodeExpiredException();
         }
 
-        if (!this.inviteCode.code().equals(inviteCode.code())) {
+        if (!this.inviteCode.code().equals(inviteCode)) {
             throw new InvalidInviteCodeException();
         }
     }

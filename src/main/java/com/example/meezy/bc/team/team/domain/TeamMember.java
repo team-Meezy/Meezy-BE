@@ -16,9 +16,11 @@ import lombok.*;
 public class TeamMember {
 
     @EmbeddedId
+    @AttributeOverride(name = "value", column = @Column(name = "team_member_id"))
     private TeamMemberId teamMemberId;
 
     @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "user_id"))
     private UserId userId;
 
     @Enumerated(EnumType.STRING)
