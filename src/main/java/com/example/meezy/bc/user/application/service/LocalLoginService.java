@@ -29,9 +29,11 @@ public class LocalLoginService {
             throw new PasswordMisMatchException();
         }
 
+        String userId = user.getUserId().value().toString();
+
         return TokenResponse.builder()
-                .accessToken(tokenService.generateAccessToken(String.valueOf(user.getUserId()), user.getOauthProvider()))
-                .refreshToken(tokenService.generateRefreshToken(String.valueOf(user.getUserId()), user.getOauthProvider()))
+                .accessToken(tokenService.generateAccessToken(userId, user.getOauthProvider()))
+                .refreshToken(tokenService.generateRefreshToken(userId, user.getOauthProvider()))
                 .build();
     }
 }
