@@ -5,6 +5,7 @@ import com.example.meezy.bc.team.team.application.service.dto.request.TeamJoinRe
 import com.example.meezy.bc.team.team.application.service.dto.response.InviteCodeResponse;
 import com.example.meezy.bc.team.team.domain.Team;
 import com.example.meezy.bc.team.team.application.service.exception.TeamNotFoundException;
+import com.example.meezy.bc.team.team.domain.exception.InvalidInviteCodeException;
 import com.example.meezy.bc.team.team.domain.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class InviteCodeService {
     @Transactional
     public void join(TeamJoinRequest request){
         Team team = teamRepository.findByInviteCode_Code(request.inviteCode())
-                .orElseThrow(TeamNotFoundException::new);
+                .orElseThrow(InvalidInviteCodeException::new);
 
         team.joinByInviteCode(request.inviteCode(), currentUserQuery.currentUser().userId());
     }
