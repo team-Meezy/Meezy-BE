@@ -6,6 +6,7 @@ import com.example.meezy.bc.team.team.infrastructure.adapter.exception.FailedUpl
 import com.example.meezy.bc.team.team.infrastructure.adapter.exception.ImageNotFoundException;
 import com.example.meezy.bc.team.team.infrastructure.adapter.exception.InvalidExtensionException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3FileStorageAdapter implements FileStoragePort {
@@ -61,6 +63,7 @@ public class S3FileStorageAdapter implements FileStoragePort {
             return buildPublicUrl(key);
 
         } catch (Exception e) {
+            log.error("파일 업로드에 실패했습니다. : ", e);
             throw new FailedUploadException();
         }
     }
@@ -78,6 +81,7 @@ public class S3FileStorageAdapter implements FileStoragePort {
 
             s3Client.deleteObject(request);
         } catch (Exception e) {
+            log.error("파일 삭제에 실패했습니다. : ", e);
             throw new FailedDeleteException();
         }
     }
@@ -93,8 +97,8 @@ public class S3FileStorageAdapter implements FileStoragePort {
         if (oldUrl != null) {
             try {
                 deleteByKey(oldUrl);
-            } catch (Exception ignored) {
-                // 신규 업로드 유지
+            } catch (Exception e) {
+                log.warn("삭제 실패, 고아 파일 발생 가능: {}", oldUrl, e);
             }
         }
 
