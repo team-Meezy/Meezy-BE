@@ -13,7 +13,7 @@ public record TeamMemberId(
         return new TeamMemberId(UUID.randomUUID());
     }
 
-    public static TeamMemberId of(UUID teamId){
-        return new TeamMemberId(teamId);
+    public static TeamMemberId of(UUID memberId){
+        return new TeamMemberId(memberId);
     }
 }
