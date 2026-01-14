@@ -15,11 +15,11 @@ import java.util.Collections;
 import java.util.List;
 
 @Getter
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "tbl_team")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Team extends AbstractAggregateRoot {
 
     @EmbeddedId
