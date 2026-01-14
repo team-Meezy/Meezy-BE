@@ -6,6 +6,7 @@ import lombok.Builder;
 @Builder
 public record AuthenticatedUser(
         UserId userId,
-        String accountId
+        String accountId,
+        String name
 ) {
 }
