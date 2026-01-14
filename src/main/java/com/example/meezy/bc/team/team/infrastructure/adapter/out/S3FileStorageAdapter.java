@@ -22,6 +22,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3FileStorageAdapter implements FileStoragePort {
 
+    private static final String KEY_PREFIX = "serverProfile";
+
     private static final Set<String> ALLOWED_EXTENSIONS =
             Set.of("jpg", "jpeg", "png");
 
@@ -41,11 +43,10 @@ public class S3FileStorageAdapter implements FileStoragePort {
         validateFile(file);
 
         String extension = extractExtension(file.getOriginalFilename());
-
         String key = generateSafeKey(extension);
 
-        try(InputStream inputStream = file.getInputStream()){
-            PutObjectRequest request = PutObjectRequest.builder() //업로드 요청 객체 생성
+        try (InputStream inputStream = file.getInputStream()) {
+            PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(key)
                     .contentType(file.getContentType())
@@ -57,17 +58,19 @@ public class S3FileStorageAdapter implements FileStoragePort {
                     RequestBody.fromInputStream(inputStream, file.getSize())
             );
 
-            return urlPrefix + key;
-        } catch (Exception  e) {
+            return buildPublicUrl(key);
+
+        } catch (Exception e) {
             throw new FailedUploadException();
         }
     }
 
     @Override
-    public void deleteByKey(String key) {
+    public void deleteByKey(String url) {
+        String key = extractKeyFromUrl(url);
         validateKey(key);
 
-        try{
+        try {
             DeleteObjectRequest request = DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(key)
@@ -80,25 +83,46 @@ public class S3FileStorageAdapter implements FileStoragePort {
     }
 
     @Override
-    public String update(String oldKey, MultipartFile newFile) {
-        if(newFile == null || newFile.isEmpty()){
-            return oldKey;
+    public String update(String oldUrl, MultipartFile newFile) {
+        if (newFile == null || newFile.isEmpty()) {
+            return oldUrl;
         }
 
         String newUrl = upload(newFile);
 
-        if(oldKey != null){
+        if (oldUrl != null) {
             try {
-                deleteByKey(oldKey);
-            } catch (Exception e){
-                //기존 파일 삭제 실패해도 신규 업로드는 유지
+                deleteByKey(oldUrl);
+            } catch (Exception ignored) {
+                // 신규 업로드 유지
             }
         }
 
         return newUrl;
     }
 
-    private void validateFile(MultipartFile file){
+    private String buildPublicUrl(String key) {
+        return urlPrefix.endsWith("/")
+                ? urlPrefix + key
+                : urlPrefix + "/" + key;
+    }
+
+    private String extractKeyFromUrl(String url) {
+        try {
+            var uri = java.net.URI.create(url);
+            String path = uri.getPath();
+
+            if (path == null || path.length() <= 1) {
+                throw new FailedDeleteException();
+            }
+
+            return path.substring(1); // 앞의 '/' 제거
+        } catch (Exception e) {
+            throw new FailedDeleteException();
+        }
+    }
+
+    private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ImageNotFoundException();
         }
@@ -114,7 +138,7 @@ public class S3FileStorageAdapter implements FileStoragePort {
     }
 
     private void validateKey(String key) {
-        if (key == null || key.contains("..") || key.contains("/")) {
+        if (key == null || key.isBlank() || key.contains("..") || key.contains("/")) {
             throw new FailedDeleteException();
         }
     }
@@ -123,10 +147,10 @@ public class S3FileStorageAdapter implements FileStoragePort {
         if (filename == null || !filename.contains(".")) {
             throw new InvalidExtensionException();
         }
-        return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(); //확장자 반환
+        return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 
     private String generateSafeKey(String extension) {
-        return UUID.randomUUID() + "." + extension;
+        return KEY_PREFIX + UUID.randomUUID() + "." + extension;
     }
 }
