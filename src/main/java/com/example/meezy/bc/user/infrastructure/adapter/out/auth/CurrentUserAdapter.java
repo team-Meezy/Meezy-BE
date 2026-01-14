@@ -24,6 +24,7 @@ public class CurrentUserAdapter implements CurrentUserQuery {
         return AuthenticatedUser.builder()
                 .userId(detachedUser.getUserId())
                 .accountId(detachedUser.getAccountId())
+                .name(detachedUser.getName())
                 .build();
     }
 }
