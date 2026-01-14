@@ -99,3 +99,14 @@ spring:
           starttls:
             enable: true
 
+
+cloud:
+  file:
+    garage:
+      bucket: ${BUCKET_NAME}
+      endpoint: ${GARAGE_ENDPOINT}
+      url-prefix: ${MEEZY_IMAGE_FOLDER}
+      region: ${GARAGE_REGION}
+    credentials:
+      access-key: ${GARAGE_ACCESS_KEY}
+      secret-key: ${GARAGE_SECRET_KEY}
