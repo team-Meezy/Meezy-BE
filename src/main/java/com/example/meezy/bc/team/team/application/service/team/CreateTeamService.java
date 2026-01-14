@@ -1,30 +1,38 @@
 package com.example.meezy.bc.team.team.application.service.team;
 
-import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.team.team.application.helper.TeamPersister;
 import com.example.meezy.bc.team.team.application.port.out.FileStoragePort;
 import com.example.meezy.bc.team.team.application.service.dto.request.CreateTeamRequest;
-import com.example.meezy.bc.team.team.domain.Team;
-import com.example.meezy.bc.team.team.domain.repository.TeamRepository;
+import com.example.meezy.bc.team.team.application.service.exception.TeamCreationFailedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class CreateTeamService {
 
-    private final CurrentUserQuery currentUserQuery;
-    private final TeamRepository teamRepository;
     private final FileStoragePort fileStoragePort;
+    private final TeamPersister teamPersister;
 
-    @Transactional
+
+
     public void create(CreateTeamRequest request){
-        teamRepository.save(
-                Team.create(
-                        request.name(),
-                        fileStoragePort.upload(request.serverImage()),
-                        currentUserQuery.currentUser().userId()
-                )
-        );
+        String imageUrl = fileStoragePort.upload(request.serverImage());
+
+        try {
+            teamPersister.save(request.name(), imageUrl);
+        } catch (Exception e) {
+            cleanupUploadedImage(imageUrl);
+            throw new TeamCreationFailedException();
+        }
+    }
+
+
+    private void cleanupUploadedImage(String imageUrl){
+        try {
+            fileStoragePort.deleteByKey(imageUrl);
+        } catch (Exception e) {
+            //파일 삭제 실패
+        }
     }
 }
