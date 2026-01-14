@@ -3,7 +3,6 @@ package com.example.meezy.bc.team.team.domain.repository;
 import com.example.meezy.bc.team.team.domain.Team;
 import com.example.meezy.bc.team.team.domain.vo.TeamId;
 import com.example.meezy.bc.user.domain.vo.UserId;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
