@@ -101,13 +101,13 @@ spring:
 
 chat:
   rabbit:
-    exchange-name: chat.exchange
-    queue-prefix: chat.server
+    exchange-name: ${CHAT_RABBIT_EXCHANGE_NAME}
+    queue-prefix: ${CHAT_RABBIT_QUEUE_PREFIX}
   websocket:
-    endpoint: /ws-chat
-    broker-prefix: /topic
-    app-prefix: /app
-    allowed-origins: "*"
+    endpoint: ${CHAT_WS_ENDPOINT}
+    broker-prefix: ${CHAT_WS_BROKER_PREFIX}
+    app-prefix: ${CHAT_WS_APP_PREFIX}
+    allowed-origins: ${CHAT_WS_ALLOWED_ORIGINS}
 
 cloud:
   file:
