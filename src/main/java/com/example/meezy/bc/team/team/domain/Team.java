@@ -30,7 +30,7 @@ public class Team extends AbstractAggregateRoot {
     @AttributeOverride(name = "value", column = @Column(name = "user_id"))
     private UserId leaderId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20)") //팀 이름은 20자 이하여야 한다. -> 도메인 규칙이지만, 지금은 간단히 표현
     private String name;
 
     @Column(nullable = false)
@@ -109,7 +109,7 @@ public class Team extends AbstractAggregateRoot {
         members.add(leaderMember);
     }
 
-    private void validateLeaderPermission(UserId userId) {
+    public void validateLeaderPermission(UserId userId) {
         if (!isLeader(userId)) {
             throw new NotTeamLeaderException();
         }
