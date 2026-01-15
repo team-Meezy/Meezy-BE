@@ -34,8 +34,8 @@ spring:
       host: ${REDIS_HOST}
 
   rabbitmq:
-    host: localhost
-    port: 5672
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
 
 
   security:
@@ -99,6 +99,15 @@ spring:
           starttls:
             enable: true
 
+chat:
+  rabbit:
+    exchange-name: chat.exchange
+    queue-prefix: chat.server
+  websocket:
+    endpoint: /ws-chat
+    broker-prefix: /topic
+    app-prefix: /app
+    allowed-origins: "*"
 
 cloud:
   file:
