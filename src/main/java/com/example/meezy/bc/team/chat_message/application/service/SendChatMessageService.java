@@ -11,13 +11,14 @@ import com.example.meezy.bc.team.chat_room.application.service.exception.ChatRoo
 import com.example.meezy.bc.team.chat_room.domain.ChatRoom;
 import com.example.meezy.bc.team.chat_room.domain.repository.ChatRoomRepository;
 import com.example.meezy.bc.team.team.domain.vo.TeamId;
-import com.example.meezy.bc.user.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SendChatMessageService {
@@ -39,7 +40,13 @@ public class SendChatMessageService {
         ChatMessage chatMessage = ChatMessage.create(chatRoom.getChatRoomId(), senderName, request.content());
         chatMessageRepository.save(chatMessage);
 
-        chatMessagePublishPort.publish(ChatMessageEvent.from(chatMessage, chatRoomId));
+        chatMessagePublishPort.publish(ChatMessageEvent.from(chatMessage, chatRoomId))
+                .thenAccept(success -> {
+                    if (!success) {
+                        log.warn("메시지 브로드캐스트 실패: chatMessageId={}, chatRoomId={}",
+                                chatMessage.getChatMessageId().value(), chatRoomId);
+                    }
+                });
 
         return ChatMessageResponse.from(chatMessage);
     }
