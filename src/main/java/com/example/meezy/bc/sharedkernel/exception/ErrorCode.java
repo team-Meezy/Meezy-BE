@@ -44,7 +44,9 @@ public enum ErrorCode {
     INVALID_INVITE_CODE(HttpStatus.BAD_REQUEST, "초대 코드가 일치하지 않습니다."),
 
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 팀이 존재하지 않습니다."),
-    TEAM_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "팀 생성에 실패했습니다.");
+    TEAM_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "팀 생성에 실패했습니다."),
+
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채팅방이 존재하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
