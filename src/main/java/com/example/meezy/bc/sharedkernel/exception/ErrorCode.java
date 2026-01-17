@@ -46,7 +46,14 @@ public enum ErrorCode {
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 팀이 존재하지 않습니다."),
     TEAM_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "팀 생성에 실패했습니다."),
 
-    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채팅방이 존재하지 않습니다.");
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채팅방이 존재하지 않습니다."),
+
+    MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다."),
+    MEETING_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "회의가 진행 중이 아닙니다."),
+    MEETING_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 진행 중인 회의가 있습니다."),
+    PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND, "회의 참가자를 찾을 수 없습니다."),
+    SIGNAL_SENDER_MISMATCH(HttpStatus.FORBIDDEN, "시그널 발신자가 일치하지 않습니다."),
+    NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "해당 팀의 멤버가 아닙니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
