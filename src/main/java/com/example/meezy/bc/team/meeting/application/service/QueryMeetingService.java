@@ -1,7 +1,6 @@
 package com.example.meezy.bc.team.meeting.application.service;
 
 import com.example.meezy.bc.team.meeting.application.service.dto.response.MeetingResponse;
-import com.example.meezy.bc.team.meeting.domain.Meeting;
 import com.example.meezy.bc.team.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.team.meeting.domain.type.MeetingStatus;
 import com.example.meezy.bc.team.team.domain.vo.TeamId;

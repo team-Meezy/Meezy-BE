@@ -1,6 +1,7 @@
 package com.example.meezy.bc.team.meeting.presentation.controller;
 
 import com.example.meezy.bc.team.meeting.application.service.*;
+import com.example.meezy.bc.team.meeting.application.service.dto.response.LeaveResponse;
 import com.example.meezy.bc.team.meeting.application.service.dto.response.MeetingResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +26,12 @@ public class MeetingController {
         return startMeetingService.start(teamId);
     }
 
+    //참여 가능한 회의가 존재할 수도 있으며 없을 수도 있으므로, ResponseEntity를 활용하여 안전하게 반환
     @GetMapping("/active")
     public ResponseEntity<MeetingResponse> getActiveMeeting(@PathVariable UUID teamId) {
         return queryMeetingService.findActiveMeeting(teamId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/join")
@@ -39,8 +41,7 @@ public class MeetingController {
 
     @PostMapping("/leave")
     public LeaveResponse leave(@PathVariable UUID teamId) {
-        boolean isMeetingActive = leaveMeetingService.leave(teamId);
-        return new LeaveResponse(isMeetingActive);
+        return leaveMeetingService.leave(teamId);
     }
 
     @PostMapping("/{meetingId}/recording")
@@ -52,5 +53,4 @@ public class MeetingController {
         receiveRecordingService.receive(teamId, meetingId, recording);
     }
 
-    public record LeaveResponse(boolean isMeetingActive) {}
 }
