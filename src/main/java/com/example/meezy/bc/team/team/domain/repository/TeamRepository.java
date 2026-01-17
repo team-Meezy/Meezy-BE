@@ -22,4 +22,8 @@ public interface TeamRepository extends JpaRepository<Team, TeamId> {
     List<Team> findTeamsByUserIdWithMembers(@Param("userId") UserId userId);
 
     Optional<Team> findByInviteCode_Code(String code);
+
+    @Query("SELECT COUNT(m) > 0 FROM Team t JOIN t.members m " +
+            "WHERE t.teamId.value = :teamId AND m.userId = :userId")
+    boolean existsMemberByTeamIdAndUserId(@Param("teamId") UUID teamId, @Param("userId") UserId userId);
 }
