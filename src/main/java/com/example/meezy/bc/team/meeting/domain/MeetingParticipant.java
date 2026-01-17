@@ -20,11 +20,11 @@ public class MeetingParticipant {
     private MeetingParticipantId meetingParticipantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
     @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "user_id"))
+    @AttributeOverride(name = "value", column = @Column(name = "user_id", nullable = false))
     private UserId userId;
 
     @Column(nullable = false)
