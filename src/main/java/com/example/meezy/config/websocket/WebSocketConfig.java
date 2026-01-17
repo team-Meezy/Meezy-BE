@@ -1,5 +1,6 @@
 package com.example.meezy.config.websocket;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -13,21 +14,12 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketProperties properties;
     private final JwtStompChannelInterceptor jwtStompChannelInterceptor;
     private final TaskScheduler heartbeatTaskScheduler;
-
-    public WebSocketConfig(
-            WebSocketProperties properties,
-            JwtStompChannelInterceptor jwtStompChannelInterceptor,
-            TaskScheduler heartbeatTaskScheduler
-    ) {
-        this.properties = properties;
-        this.jwtStompChannelInterceptor = jwtStompChannelInterceptor;
-        this.heartbeatTaskScheduler = heartbeatTaskScheduler;
-    }
 
     @Bean
     public static TaskScheduler heartbeatTaskScheduler() {
