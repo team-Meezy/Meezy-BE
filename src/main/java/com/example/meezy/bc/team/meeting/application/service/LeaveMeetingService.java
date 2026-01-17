@@ -1,6 +1,7 @@
 package com.example.meezy.bc.team.meeting.application.service;
 
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.team.meeting.application.service.dto.response.LeaveResponse;
 import com.example.meezy.bc.team.meeting.domain.Meeting;
 import com.example.meezy.bc.team.meeting.domain.event.MeetingEvent;
 import com.example.meezy.bc.team.meeting.domain.exception.MeetingNotFoundException;
@@ -23,14 +24,16 @@ public class LeaveMeetingService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public boolean leave(UUID teamId) {
+    public LeaveResponse leave(UUID teamId) {
         Meeting meeting = findActiveMeetingOrThrow(teamId);
 
         meeting.leave(currentUserQuery.currentUser().userId());
 
         publishEvents(meeting);
 
-        return meeting.isActive();
+        return LeaveResponse.builder()
+                .isMeetingActive(meeting.isActive())
+                .build();
     }
 
     private void publishEvents(Meeting meeting) {
