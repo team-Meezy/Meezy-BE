@@ -75,7 +75,7 @@ public class Meeting extends AbstractAggregateRoot {
         MeetingParticipant existingParticipant = findParticipantByUserId(userId);
 
         if (existingParticipant != null && existingParticipant.isActive()) {
-            return;
+            return; //회의를 처음 참가가 아니면서 현재 참가자면 무시
         }
 
         List<UUID> existingParticipantIds = getActiveParticipantUserIds();
@@ -100,7 +100,7 @@ public class Meeting extends AbstractAggregateRoot {
         MeetingParticipant participant = findParticipantByUserIdOrThrow(userId);
 
         if (!participant.isActive()) {
-            return;
+            return; //회의가 실행 중이 아니라면 무시
         }
 
         participant.leave();
@@ -117,6 +117,10 @@ public class Meeting extends AbstractAggregateRoot {
     }
 
     public void end() {
+
+        if(!isActive()){
+            return; //이미 종료된 미팅이라면 무시
+        }
         this.status = MeetingStatus.ENDED;
         this.endedAt = LocalDateTime.now();
 
