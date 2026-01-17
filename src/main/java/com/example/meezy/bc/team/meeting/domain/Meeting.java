@@ -72,9 +72,13 @@ public class Meeting extends AbstractAggregateRoot {
     public void join(UserId userId) {
         validateActive();
 
-        List<UUID> existingParticipantIds = getActiveParticipantUserIds();
-
         MeetingParticipant existingParticipant = findParticipantByUserId(userId);
+
+        if (existingParticipant != null && existingParticipant.isActive()) {
+            return;
+        }
+
+        List<UUID> existingParticipantIds = getActiveParticipantUserIds();
 
         if (existingParticipant != null) {
             existingParticipant.rejoin();
@@ -94,6 +98,11 @@ public class Meeting extends AbstractAggregateRoot {
         validateActive();
 
         MeetingParticipant participant = findParticipantByUserIdOrThrow(userId);
+
+        if (!participant.isActive()) {
+            return;
+        }
+
         participant.leave();
 
         registerEvent(new ParticipantLeftEvent(
