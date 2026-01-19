@@ -52,8 +52,19 @@ public enum ErrorCode {
     MEETING_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "회의가 진행 중이 아닙니다."),
     MEETING_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 진행 중인 회의가 있습니다."),
     PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND, "회의 참가자를 찾을 수 없습니다."),
+    MEETING_NOT_BELONGS_TO_TEAM(HttpStatus.BAD_REQUEST, "해당 회의는 이 팀에 속하지 않습니다."),
     SIGNAL_SENDER_MISMATCH(HttpStatus.FORBIDDEN, "시그널 발신자가 일치하지 않습니다."),
-    NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "해당 팀의 멤버가 아닙니다.");
+    NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "해당 팀의 멤버가 아닙니다."),
+
+    EMPTY_AUDIO_FILE(HttpStatus.BAD_REQUEST, "오디오 파일이 비어있습니다."),
+    INVALID_AUDIO_EXTENSION(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 파일 형식입니다. (mp3, wav만 가능)"),
+    INVALID_AUDIO_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 Content-Type입니다."),
+    AUDIO_CONVERSION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 변환 중 오류가 발생했습니다."),
+
+    REPORT_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회의 리포트 생성에 실패했습니다."),
+    REPORT_GENERATION_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "회의 리포트 생성 중 인터럽트가 발생했습니다."),
+
+    MEETING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의 리포트를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
