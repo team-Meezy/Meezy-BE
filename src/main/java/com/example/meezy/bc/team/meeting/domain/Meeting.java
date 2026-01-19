@@ -4,7 +4,10 @@ import com.example.meezy.bc.sharedkernel.domain.AbstractAggregateRoot;
 import com.example.meezy.bc.team.meeting.domain.event.MeetingEndedEvent;
 import com.example.meezy.bc.team.meeting.domain.event.ParticipantJoinedEvent;
 import com.example.meezy.bc.team.meeting.domain.event.ParticipantLeftEvent;
+import com.example.meezy.bc.team.meeting.domain.event.RecordingReceivedEvent;
 import com.example.meezy.bc.team.meeting.domain.exception.MeetingNotActiveException;
+import com.example.meezy.bc.team.meeting.domain.exception.MeetingNotBelongsToTeamException;
+import org.springframework.web.multipart.MultipartFile;
 import com.example.meezy.bc.team.meeting.domain.exception.ParticipantNotFoundException;
 import com.example.meezy.bc.team.meeting.domain.type.MeetingStatus;
 import com.example.meezy.bc.team.meeting.domain.vo.MeetingId;
@@ -132,6 +135,23 @@ public class Meeting extends AbstractAggregateRoot {
                 teamId.value(),
                 meetingId.value()
         ));
+    }
+
+    public void receiveRecording(MultipartFile audio) {
+        registerEvent(new RecordingReceivedEvent(
+                meetingId.value(),
+                audio
+        ));
+    }
+
+    public boolean belongsToTeam(TeamId teamId) {
+        return this.teamId.equals(teamId);
+    }
+
+    public void validateBelongsToTeam(TeamId teamId) {
+        if (!belongsToTeam(teamId)) {
+            throw new MeetingNotBelongsToTeamException();
+        }
     }
 
     public boolean isActive() {
