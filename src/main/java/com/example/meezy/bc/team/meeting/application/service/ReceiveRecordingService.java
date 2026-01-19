@@ -1,22 +1,41 @@
 package com.example.meezy.bc.team.meeting.application.service;
 
+import com.example.meezy.bc.team.meeting.domain.Meeting;
+import com.example.meezy.bc.team.meeting.domain.event.RecordingReceivedEvent;
+import com.example.meezy.bc.team.meeting.domain.exception.MeetingNotFoundException;
+import com.example.meezy.bc.team.meeting.domain.repository.MeetingRepository;
+import com.example.meezy.bc.team.team.domain.vo.TeamId;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReceiveRecordingService {
 
-    public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
-        log.info("녹음 파일 수신: teamId={}, meetingId={}, fileName={}, size={}bytes",
-                teamId, meetingId, recording.getOriginalFilename(), recording.getSize());
+    private final MeetingRepository meetingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-        // 현재는 저장하지 않고 수신만 수행
-        // 추후 이벤트를 발행하여 AI에게 전달할 예정
+    @Transactional
+    public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
+        Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
+                .orElseThrow(MeetingNotFoundException::new);
+
+        meeting.validateBelongsToTeam(TeamId.of(teamId));
+        meeting.receiveRecording(recording);
+
+        publishEvents(meeting);
+    }
+
+    private void publishEvents(Meeting meeting) {
+        meeting.pullDomainEvents().forEach(event -> {
+            if (event instanceof RecordingReceivedEvent recordingEvent) {
+                eventPublisher.publishEvent(recordingEvent);
+            }
+        });
     }
 }
