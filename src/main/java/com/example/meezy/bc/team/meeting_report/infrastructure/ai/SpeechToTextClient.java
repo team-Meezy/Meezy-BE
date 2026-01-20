@@ -1,6 +1,5 @@
 package com.example.meezy.bc.team.meeting_report.infrastructure.ai;
 
-import com.example.meezy.bc.team.meeting.application.port.out.TranscriptionPort;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.AudioConversionException;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.EmptyAudioFileException;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.InvalidAudioContentTypeException;
@@ -17,14 +16,13 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class SpeechToTextClient implements TranscriptionPort {
+public class SpeechToTextClient {
 
     private final OpenAiAudioTranscriptionModel transcriptionModel;
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "wav");
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("audio/mpeg", "audio/wav", "audio/wave");
 
-    @Override
     public String transcribe(MultipartFile audio) {
         validateNotEmpty(audio);
         validateExtension(audio.getOriginalFilename());
