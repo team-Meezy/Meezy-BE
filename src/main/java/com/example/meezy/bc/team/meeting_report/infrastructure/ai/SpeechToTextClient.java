@@ -1,17 +1,14 @@
 package com.example.meezy.bc.team.meeting_report.infrastructure.ai;
 
-import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.AudioConversionException;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.EmptyAudioFileException;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.InvalidAudioContentTypeException;
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.exception.InvalidAudioExtensionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.openai.OpenAiAudioTranscriptionModel;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Set;
 
 @Component
@@ -23,17 +20,17 @@ public class SpeechToTextClient {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "wav");
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("audio/mpeg", "audio/wav", "audio/wave");
 
-    public String transcribe(MultipartFile audio) {
-        validateNotEmpty(audio);
-        validateExtension(audio.getOriginalFilename());
-        validateContentType(audio.getContentType());
+    public String transcribe(byte[] audioData, String originalFilename, String contentType) {
+        validateNotEmpty(audioData);
+        validateExtension(originalFilename);
+        validateContentType(contentType);
 
-        Resource resource = toResource(audio);
+        Resource resource = toResource(audioData, originalFilename);
         return transcriptionModel.call(resource);
     }
 
-    private void validateNotEmpty(MultipartFile audio) {
-        if (audio == null || audio.isEmpty()) {
+    private void validateNotEmpty(byte[] audioData) {
+        if (audioData == null || audioData.length == 0) {
             throw new EmptyAudioFileException();
         }
     }
@@ -59,11 +56,12 @@ public class SpeechToTextClient {
         return ALLOWED_EXTENSIONS.contains(extension);
     }
 
-    private Resource toResource(MultipartFile audio) {
-        try {
-            return new InputStreamResource(audio.getInputStream());
-        } catch (IOException e) {
-            throw new AudioConversionException();
-        }
+    private Resource toResource(byte[] audioData, String filename) {
+        return new ByteArrayResource(audioData) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        };
     }
 }

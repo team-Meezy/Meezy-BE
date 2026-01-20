@@ -6,7 +6,6 @@ import com.example.meezy.bc.team.meeting_report.infrastructure.ai.SpeechToTextCl
 import com.example.meezy.bc.team.meeting_report.infrastructure.ai.SummaryGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @RequiredArgsConstructor
@@ -17,8 +16,8 @@ public class MeetingAnalyzerAdapter implements MeetingAnalyzerPort {
     private final FeedbackGenerator feedbackGenerator;
 
     @Override
-    public String transcribe(MultipartFile audio) {
-        return speechToTextClient.transcribe(audio);
+    public String transcribe(byte[] audioData, String originalFilename, String contentType) {
+        return speechToTextClient.transcribe(audioData, originalFilename, contentType);
     }
 
     @Override

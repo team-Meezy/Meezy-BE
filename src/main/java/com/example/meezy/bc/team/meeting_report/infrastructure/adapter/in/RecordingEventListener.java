@@ -22,10 +22,15 @@ public class RecordingEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRecordingReceived(RecordingReceivedEvent event) {
         try {
-            String transcript = meetingAnalyzerPort.transcribe(event.audio());
+            String transcript = meetingAnalyzerPort.transcribe(
+                    event.audioData(),
+                    event.originalFilename(),
+                    event.contentType()
+            );
 
             reportGenerator.generate(event.meetingId(), transcript);
 
+            log.info("회의 리포트 생성 완료: meetingId={}", event.meetingId());
         } catch (Exception e) {
             log.error("회의 리포트 생성 실패: meetingId={}", event.meetingId(), e);
         }
