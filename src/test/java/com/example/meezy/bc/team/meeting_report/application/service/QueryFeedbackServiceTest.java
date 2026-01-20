@@ -102,10 +102,10 @@ class QueryFeedbackServiceTest {
         @Test
         @DisplayName("팀의 모든 피드백을 조회할 수 있다")
         void findAllByTeamId_returns_all_feedbacks() {
-            MeetingId meetingId2 = MeetingId.newId();
-            MeetingReport report2 = MeetingReport.create(meetingId2, "요약 2", "피드백 2");
+            Meeting meeting2 = Meeting.start(teamId, UserId.newId());
+            MeetingReport report2 = MeetingReport.create(meeting2.getMeetingId(), "요약 2", "피드백 2");
 
-            given(meetingRepository.findAllByTeamId(any(TeamId.class))).willReturn(List.of(meeting));
+            given(meetingRepository.findAllByTeamId(any(TeamId.class))).willReturn(List.of(meeting, meeting2));
             given(meetingReportRepository.findAllByMeetingIdIn(any())).willReturn(List.of(report, report2));
 
             List<FeedbackResponse> responses = queryFeedbackService.findAllByTeamId(teamIdValue);
