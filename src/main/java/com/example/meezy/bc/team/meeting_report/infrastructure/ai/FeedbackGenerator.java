@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FeedbackGenerator {
 
-    private ChatClient client;
+    private final ChatClient client;
 
     @Value("${spring.ai.openai.prompt.feedback}")
     private String systemPrompt;

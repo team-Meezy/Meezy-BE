@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SummaryGenerator {
 
-    private ChatClient client;
+    private final ChatClient client;
 
     @Value("${spring.ai.openai.prompt.summary}")
     private String systemPrompt;
