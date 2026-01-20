@@ -6,6 +6,7 @@ import com.example.meezy.bc.team.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.team.team.domain.vo.TeamId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ public interface MeetingRepository extends JpaRepository<Meeting, MeetingId> {
     Optional<Meeting> findByMeetingId_Value(UUID meetingId);
 
     Optional<Meeting> findByTeamIdAndStatus(TeamId teamId, MeetingStatus status);
+
+    List<Meeting> findAllByTeamId(TeamId teamId);
 
     boolean existsByTeamIdAndStatus(TeamId teamId, MeetingStatus status);
 }
