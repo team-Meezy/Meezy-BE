@@ -1,0 +1,11 @@
+package com.example.meezy.bc.collaboration.meeting.domain.exception;
+
+import com.example.meezy.bc.sharedkernel.exception.CustomException;
+import com.example.meezy.bc.sharedkernel.exception.ErrorCode;
+
+public class SignalSenderMismatchException extends CustomException {
+
+    public SignalSenderMismatchException() {
+        super(ErrorCode.SIGNAL_SENDER_MISMATCH);
+    }
+}
