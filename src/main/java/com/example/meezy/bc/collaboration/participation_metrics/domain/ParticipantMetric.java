@@ -2,7 +2,7 @@ package com.example.meezy.bc.collaboration.participation_metrics.domain;
 
 import com.example.meezy.bc.collaboration.participation_metrics.domain.vo.ParticipantMetricId;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.vo.ParticipationRate;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.*;
 

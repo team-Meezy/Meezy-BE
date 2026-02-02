@@ -2,7 +2,7 @@ package com.example.meezy.bc.collaboration.team.domain;
 
 import com.example.meezy.bc.collaboration.team.domain.type.Role;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamMemberId;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.*;
 

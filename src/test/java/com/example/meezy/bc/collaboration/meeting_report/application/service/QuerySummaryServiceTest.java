@@ -9,7 +9,7 @@ import com.example.meezy.bc.collaboration.meeting_report.application.service.exc
 import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReport;
 import com.example.meezy.bc.collaboration.meeting_report.domain.repository.MeetingReportRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
