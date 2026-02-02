@@ -20,7 +20,7 @@ public class ParticipationController {
             @PathVariable UUID teamId,
             @PathVariable UUID meetingId
     ) {
-        return queryParticipationService.getMeetingParticipation(meetingId);
+        return queryParticipationService.getMeetingParticipation(teamId, meetingId);
     }
 
     @GetMapping("/member")

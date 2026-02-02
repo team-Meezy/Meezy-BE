@@ -124,7 +124,7 @@ class QueryParticipationServiceTest {
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.of(participationMetrics));
 
-            MeetingParticipationResponse response = queryParticipationService.getMeetingParticipation(meetingIdValue);
+            MeetingParticipationResponse response = queryParticipationService.getMeetingParticipation(teamIdValue, meetingIdValue);
 
             assertThat(response.meetingId()).isEqualTo(meetingIdValue);
             assertThat(response.teamId()).isEqualTo(teamIdValue);
@@ -137,7 +137,18 @@ class QueryParticipationServiceTest {
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> queryParticipationService.getMeetingParticipation(meetingIdValue))
+            assertThatThrownBy(() -> queryParticipationService.getMeetingParticipation(teamIdValue, meetingIdValue))
+                    .isInstanceOf(ParticipationMetricsNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("회의가 해당 팀 소속이 아니면 예외가 발생한다")
+        void getMeetingParticipation_throws_when_team_mismatch() {
+            UUID otherTeamIdValue = UUID.randomUUID();
+            given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
+                    .willReturn(Optional.of(participationMetrics));
+
+            assertThatThrownBy(() -> queryParticipationService.getMeetingParticipation(otherTeamIdValue, meetingIdValue))
                     .isInstanceOf(ParticipationMetricsNotFoundException.class);
         }
     }
