@@ -19,4 +19,6 @@ public interface MeetingRepository extends JpaRepository<Meeting, MeetingId> {
     List<Meeting> findAllByTeamId(TeamId teamId);
 
     boolean existsByTeamIdAndStatus(TeamId teamId, MeetingStatus status);
+
+    boolean existsByMeetingIdAndStatus(MeetingId meetingId, MeetingStatus status);
 }
