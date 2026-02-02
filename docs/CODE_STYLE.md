@@ -155,3 +155,4 @@ public abstract class AbstractAggregateRoot {
 ```java
 public record MeetingEndedEvent(UUID teamId, UUID meetingId) implements MeetingEvent {}
 ```
+

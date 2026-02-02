@@ -71,3 +71,4 @@ com.example.meezy
 
 - Input Port 만들지 말 것 (Output Port만 사용)
 - 아키텍처 규칙은 `HexagonalArchitectureTest`, `CyclicDependencyTest`에서 강제됨
+
