@@ -58,7 +58,7 @@ class CyclicDependencyTest {
     @DisplayName("Application Service 간 순환 의존성이 없어야 한다")
     void no_cyclic_dependencies_between_services() {
         slices()
-                .matching(BASE_PACKAGE + ".bc.user.application.service.(*)")
+                .matching(BASE_PACKAGE + ".bc.user.user.application.service.(*)")
                 .should().beFreeOfCycles()
                 .because("Application Service 간 순환 의존성이 없어야 합니다")
                 .check(classes);

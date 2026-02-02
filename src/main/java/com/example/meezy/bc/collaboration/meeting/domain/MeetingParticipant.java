@@ -1,7 +1,7 @@
 package com.example.meezy.bc.collaboration.meeting.domain;
 
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingParticipantId;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +36,9 @@ public class MeetingParticipant {
     @Column(nullable = false)
     private boolean isActive;
 
+    @Column(nullable = false)
+    private long accumulatedSeconds;
+
     public static MeetingParticipant create(UserId userId, Meeting meeting) {
         return MeetingParticipant.builder()
                 .meetingParticipantId(MeetingParticipantId.newId())
@@ -44,10 +47,15 @@ public class MeetingParticipant {
                 .joinedAt(LocalDateTime.now())
                 .leftAt(null)
                 .isActive(true)
+                .accumulatedSeconds(0L)
                 .build();
     }
 
     public void leave() {
+        if (this.isActive && this.joinedAt != null) {
+            this.accumulatedSeconds += java.time.Duration.between(this.joinedAt, LocalDateTime.now()).getSeconds();
+            this.joinedAt = null;
+        }
         this.leftAt = LocalDateTime.now();
         this.isActive = false;
     }
@@ -56,6 +64,14 @@ public class MeetingParticipant {
         this.joinedAt = LocalDateTime.now();
         this.leftAt = null;
         this.isActive = true;
+    }
+
+    public long getTotalConnectionSeconds(LocalDateTime meetingEndedAt) {
+        long total = this.accumulatedSeconds;
+        if (this.isActive && this.joinedAt != null && meetingEndedAt != null) {
+            total += java.time.Duration.between(this.joinedAt, meetingEndedAt).getSeconds();
+        }
+        return total;
     }
 
     public boolean hasUserId(UserId userId) {

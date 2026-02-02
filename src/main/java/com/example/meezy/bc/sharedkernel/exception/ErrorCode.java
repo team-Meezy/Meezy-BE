@@ -64,7 +64,9 @@ public enum ErrorCode {
     REPORT_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회의 리포트 생성에 실패했습니다."),
     REPORT_GENERATION_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "회의 리포트 생성 중 인터럽트가 발생했습니다."),
 
-    MEETING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의 리포트를 찾을 수 없습니다.");
+    MEETING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의 리포트를 찾을 수 없습니다."),
+
+    PARTICIPATION_METRICS_NOT_FOUND(HttpStatus.NOT_FOUND, "참여 지표를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
