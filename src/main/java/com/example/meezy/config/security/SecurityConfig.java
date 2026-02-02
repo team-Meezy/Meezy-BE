@@ -1,11 +1,11 @@
 package com.example.meezy.config.security;
 
-import com.example.meezy.bc.user.application.service.internal.TokenService;
-import com.example.meezy.bc.user.infrastructure.security.jwt.JwtTokenFilter;
-import com.example.meezy.bc.user.infrastructure.security.oauth.CustomOauthService;
-import com.example.meezy.bc.user.infrastructure.security.oauth.handler.OauthFailureHandler;
-import com.example.meezy.bc.user.infrastructure.security.oauth.handler.OauthSuccessHandler;
-import com.example.meezy.bc.user.infrastructure.security.util.TokenResolver;
+import com.example.meezy.bc.user.user.application.service.internal.TokenService;
+import com.example.meezy.bc.user.user.infrastructure.security.jwt.JwtTokenFilter;
+import com.example.meezy.bc.user.user.infrastructure.security.oauth.CustomOauthService;
+import com.example.meezy.bc.user.user.infrastructure.security.oauth.handler.OauthFailureHandler;
+import com.example.meezy.bc.user.user.infrastructure.security.oauth.handler.OauthSuccessHandler;
+import com.example.meezy.bc.user.user.infrastructure.security.util.TokenResolver;
 import com.example.meezy.config.exception.GlobalExceptionFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

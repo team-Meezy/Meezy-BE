@@ -1,9 +1,9 @@
 package com.example.meezy.config.websocket;
 
-import com.example.meezy.bc.user.application.service.internal.TokenService;
-import com.example.meezy.bc.user.infrastructure.security.auth.AuthDetails;
-import com.example.meezy.bc.user.infrastructure.security.jwt.JwtProperties;
-import com.example.meezy.bc.user.infrastructure.security.jwt.exception.InvalidJwtException;
+import com.example.meezy.bc.user.user.application.service.internal.TokenService;
+import com.example.meezy.bc.user.user.infrastructure.security.auth.AuthDetails;
+import com.example.meezy.bc.user.user.infrastructure.security.jwt.JwtProperties;
+import com.example.meezy.bc.user.user.infrastructure.security.jwt.exception.InvalidJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
