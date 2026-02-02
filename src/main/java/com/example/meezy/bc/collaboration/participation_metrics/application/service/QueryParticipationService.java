@@ -38,7 +38,7 @@ public class QueryParticipationService {
         List<Double> recentRates = participationMetricsRepository
                 .findRecentRatesByTeamIdAndUserId(TeamId.of(teamId), userId); //최근 회의 30개 조회
 
-        double averageRate = calculateAverage(recentRates); //30개 회의의 평균 시간
+        double averageRate = calculateAverage(recentRates); // 30개 회의의 평균 참여율
 
         return ParticipationResponse.of(
                 meetingId,
@@ -49,10 +49,14 @@ public class QueryParticipationService {
         );
     }
 
-    public MeetingParticipationResponse getMeetingParticipation(UUID meetingId) {
+    public MeetingParticipationResponse getMeetingParticipation(UUID teamId, UUID meetingId) {
         ParticipationMetrics metrics = participationMetricsRepository
                 .findByMeetingIdWithParticipants(MeetingId.of(meetingId))
                 .orElseThrow(ParticipationMetricsNotFoundException::new);
+
+        if (!metrics.getTeamId().equals(TeamId.of(teamId))) {
+            throw new ParticipationMetricsNotFoundException();
+        }
 
         return MeetingParticipationResponse.from(metrics);
     }
