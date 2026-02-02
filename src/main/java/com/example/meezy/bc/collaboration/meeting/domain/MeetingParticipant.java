@@ -52,8 +52,9 @@ public class MeetingParticipant {
     }
 
     public void leave() {
-        if (this.joinedAt != null) {
+        if (this.isActive && this.joinedAt != null) {
             this.accumulatedSeconds += java.time.Duration.between(this.joinedAt, LocalDateTime.now()).getSeconds();
+            this.joinedAt = null;
         }
         this.leftAt = LocalDateTime.now();
         this.isActive = false;
