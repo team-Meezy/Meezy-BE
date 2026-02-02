@@ -1,6 +1,6 @@
 package com.example.meezy.bc.sharedkernel.user;
 
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import lombok.Builder;
 
 @Builder

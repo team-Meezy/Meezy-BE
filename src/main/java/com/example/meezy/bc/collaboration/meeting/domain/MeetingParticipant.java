@@ -1,7 +1,7 @@
 package com.example.meezy.bc.collaboration.meeting.domain;
 
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingParticipantId;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.*;
 

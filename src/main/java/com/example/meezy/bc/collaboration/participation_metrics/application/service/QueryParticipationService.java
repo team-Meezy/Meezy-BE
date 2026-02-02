@@ -9,7 +9,7 @@ import com.example.meezy.bc.collaboration.participation_metrics.domain.repositor
 import com.example.meezy.bc.collaboration.participation_metrics.domain.vo.ParticipationRate;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
-import com.example.meezy.bc.user.domain.vo.UserId;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
