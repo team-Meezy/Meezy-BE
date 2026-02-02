@@ -6,10 +6,7 @@
       "Bash(git checkout:*)",
       "Bash(git reset:*)",
       "Bash(./gradlew build:*)",
-      "Bash(./gradlew compileTestJava:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(./gradlew compileTestJava:*)"
     ]
   }
 }
