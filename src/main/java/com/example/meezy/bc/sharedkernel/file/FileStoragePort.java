@@ -1,4 +1,4 @@
-package com.example.meezy.bc.collaboration.team.application.port.out;
+package com.example.meezy.bc.sharedkernel.file;
 
 import org.springframework.web.multipart.MultipartFile;
 
