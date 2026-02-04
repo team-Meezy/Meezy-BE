@@ -37,6 +37,6 @@ out/
 .vscode/
 
 ###Claude
-.claude
+.claude/settings.local.json
 CLAUDE.md
 docs/CODE_STYLE.md
