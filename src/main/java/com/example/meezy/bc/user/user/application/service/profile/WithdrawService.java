@@ -1,14 +1,15 @@
 package com.example.meezy.bc.user.user.application.service.profile;
 
-import com.example.meezy.bc.sharedkernel.file.FileStoragePort;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.user.user.application.port.out.PasswordVerifierPort;
 import com.example.meezy.bc.user.user.application.service.dto.request.WithdrawRequest;
 import com.example.meezy.bc.user.user.application.service.exception.PasswordMisMatchException;
 import com.example.meezy.bc.user.user.application.service.exception.UserNotFoundException;
 import com.example.meezy.bc.user.user.domain.User;
+import com.example.meezy.bc.user.user.domain.event.UserWithdrawnEvent;
 import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,7 @@ public class WithdrawService {
     private final UserRepository userRepository;
     private final CurrentUserQuery currentUserQuery;
     private final PasswordVerifierPort passwordVerifierPort;
-    private final FileStoragePort fileStoragePort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void withdraw(WithdrawRequest request) {
@@ -31,19 +32,9 @@ public class WithdrawService {
             throw new PasswordMisMatchException();
         }
 
-        deleteProfileImageIfExists(user);
-
+        String profileImageUrl = user.getProfileImageUrl();
         userRepository.delete(user);
-    }
 
-    private void deleteProfileImageIfExists(User user) {
-        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()) {
-            try {
-                fileStoragePort.deleteByKey(user.getProfileImageUrl());
-            } catch (Exception ignored) {
-                // 이미지 삭제 실패해도 회원탈퇴는 진행 -> 주비즈니스 로직이 중요하기 때문
-                // 고아 파일은 추후 스케줄러로 정리
-            }
-        }
+        eventPublisher.publishEvent(new UserWithdrawnEvent(profileImageUrl));
     }
 }
