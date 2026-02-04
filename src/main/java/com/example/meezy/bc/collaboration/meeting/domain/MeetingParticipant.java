@@ -27,7 +27,7 @@ public class MeetingParticipant {
     @AttributeOverride(name = "value", column = @Column(name = "user_id", nullable = false))
     private UserId userId;
 
-    @Column(nullable = false)
+    @Column
     private LocalDateTime joinedAt;
 
     @Column
