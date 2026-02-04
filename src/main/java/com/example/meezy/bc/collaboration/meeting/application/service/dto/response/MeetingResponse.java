@@ -2,10 +2,12 @@ package com.example.meezy.bc.collaboration.meeting.application.service.dto.respo
 
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.MeetingParticipant;
+import com.example.meezy.bc.user.user.domain.User;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Builder
@@ -18,7 +20,7 @@ public record MeetingResponse(
         List<ParticipantResponse> participants
 ) {
 
-    public static MeetingResponse from(Meeting meeting) {
+    public static MeetingResponse from(Meeting meeting, Map<UUID, User> users) {
         return MeetingResponse.builder()
                 .meetingId(meeting.getMeetingId().value())
                 .teamId(meeting.getTeamId().value())
@@ -27,7 +29,7 @@ public record MeetingResponse(
                 .startedAt(meeting.getStartedAt())
                 .participants(meeting.getParticipants().stream()
                         .filter(MeetingParticipant::isActive)
-                        .map(ParticipantResponse::from)
+                        .map(p -> ParticipantResponse.from(p, users.get(p.getUserId().value())))
                         .toList())
                 .build();
     }

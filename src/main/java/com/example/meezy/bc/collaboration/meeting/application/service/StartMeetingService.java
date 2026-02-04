@@ -1,6 +1,5 @@
 package com.example.meezy.bc.collaboration.meeting.application.service;
 
-import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingAlreadyExistsException;
@@ -10,11 +9,17 @@ import com.example.meezy.bc.collaboration.team.application.service.exception.Tea
 import com.example.meezy.bc.collaboration.team.domain.Team;
 import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
+import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.user.user.domain.User;
+import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class StartMeetingService {
     private final MeetingRepository meetingRepository;
     private final TeamRepository teamRepository;
     private final CurrentUserQuery currentUserQuery;
+    private final UserRepository userRepository;
 
     @Transactional
     public MeetingResponse start(UUID teamId) {
@@ -39,7 +45,10 @@ public class StartMeetingService {
 
         meetingRepository.save(meeting);
 
-        return MeetingResponse.from(meeting);
+        UUID hostUserId = currentUserQuery.currentUser().userId().value();
+        Map<UUID, User> users = userRepository.findByUserId_ValueIn(List.of(hostUserId)).stream()
+                .collect(Collectors.toMap(user -> user.getUserId().value(), user -> user));
+        return MeetingResponse.from(meeting, users);
     }
 
     private Team findTeamOrThrow(UUID teamId) {

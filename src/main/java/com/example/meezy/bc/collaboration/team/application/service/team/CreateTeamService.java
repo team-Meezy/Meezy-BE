@@ -1,7 +1,7 @@
 package com.example.meezy.bc.collaboration.team.application.service.team;
 
 import com.example.meezy.bc.collaboration.team.application.helper.TeamPersister;
-import com.example.meezy.bc.collaboration.team.application.port.out.FileStoragePort;
+import com.example.meezy.bc.sharedkernel.file.FileStoragePort;
 import com.example.meezy.bc.collaboration.team.application.service.dto.request.CreateTeamRequest;
 import com.example.meezy.bc.collaboration.team.application.service.exception.TeamCreationFailedException;
 import lombok.RequiredArgsConstructor;

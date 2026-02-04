@@ -1,11 +1,12 @@
 package com.example.meezy.bc.collaboration.team.application.service.team;
 
-import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
-import com.example.meezy.bc.collaboration.team.application.port.out.FileStoragePort;
-import com.example.meezy.bc.collaboration.team.domain.Team;
 import com.example.meezy.bc.collaboration.team.application.service.exception.TeamNotFoundException;
+import com.example.meezy.bc.collaboration.team.domain.Team;
+import com.example.meezy.bc.collaboration.team.domain.event.TeamDeletedEvent;
 import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
+import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,17 +18,18 @@ public class DeleteTeamService {
 
     private final TeamRepository teamRepository;
     private final CurrentUserQuery currentUserQuery;
-    private final FileStoragePort fileStoragePort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void delete(UUID teamId){
+    public void delete(UUID teamId) {
         Team team = teamRepository.findByTeamId_Value(teamId)
                 .orElseThrow(TeamNotFoundException::new);
 
         team.validateCanDelete(currentUserQuery.currentUser().userId());
 
-        fileStoragePort.deleteByKey(team.getServerImageUrl());
-
+        String serverImageUrl = team.getServerImageUrl();
         teamRepository.delete(team);
+
+        eventPublisher.publishEvent(new TeamDeletedEvent(serverImageUrl));
     }
 }

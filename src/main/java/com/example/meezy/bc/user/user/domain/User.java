@@ -18,8 +18,8 @@ import lombok.*;
                 )
         }
 )
-@Builder
-@AllArgsConstructor
+@Builder(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends AbstractAggregateRoot {
 
@@ -33,12 +33,15 @@ public class User extends AbstractAggregateRoot {
     @Column(nullable = false)
     private OauthProvider oauthProvider;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 50)
     private String accountId;
 
+    @Column(length = 100)
     private String name;
 
     private String password;
+
+    private String profileImageUrl;
 
     //에미일 인증 필요
     public static User createLocal(String email, String accountId, String name, String password){
@@ -70,5 +73,13 @@ public class User extends AbstractAggregateRoot {
 
     public boolean isProfileCompleted(){
         return this.accountId != null && this.name != null && this.password != null;
+    }
+
+    public void uploadProfileImage(String profileImageUrl){
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void changePassword(String newPassword){
+        this.password = newPassword;
     }
 }

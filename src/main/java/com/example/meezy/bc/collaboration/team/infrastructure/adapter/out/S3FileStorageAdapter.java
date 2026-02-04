@@ -1,6 +1,6 @@
 package com.example.meezy.bc.collaboration.team.infrastructure.adapter.out;
 
-import com.example.meezy.bc.collaboration.team.application.port.out.FileStoragePort;
+import com.example.meezy.bc.sharedkernel.file.FileStoragePort;
 import com.example.meezy.bc.collaboration.team.infrastructure.adapter.exception.FailedDeleteException;
 import com.example.meezy.bc.collaboration.team.infrastructure.adapter.exception.FailedUploadException;
 import com.example.meezy.bc.collaboration.team.infrastructure.adapter.exception.ImageNotFoundException;
