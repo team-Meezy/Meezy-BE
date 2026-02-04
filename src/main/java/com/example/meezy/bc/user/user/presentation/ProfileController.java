@@ -38,7 +38,7 @@ public class ProfileController {
     
 
     @PatchMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void uploadProfileImage(@RequestPart @NotEmptyMultipartFile MultipartFile profileImage) {
+    public void uploadProfileImage(@RequestPart("profileImage") @NotEmptyMultipartFile MultipartFile profileImage) {
         uploadProfileImageService.upload(profileImage);
     }
 
