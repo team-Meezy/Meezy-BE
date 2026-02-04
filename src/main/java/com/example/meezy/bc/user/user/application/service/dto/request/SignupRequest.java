@@ -15,7 +15,7 @@ public record SignupRequest(
         String accountId,
 
         @NotBlank(message = "이름은 필수입니다.")
-        @Size(min =3, max = 100, message = "이름을 5 ~ 50 사이로 입력해주세요.")
+        @Size(min =2, max = 100, message = "이름을 2 ~ 100 사이로 입력해주세요.")
         String name,
 
         @NotBlank(message = "비밀번호는 필수입니다.")
