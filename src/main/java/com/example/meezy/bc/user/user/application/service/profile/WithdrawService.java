@@ -38,7 +38,12 @@ public class WithdrawService {
 
     private void deleteProfileImageIfExists(User user) {
         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isBlank()) {
-            fileStoragePort.deleteByKey(user.getProfileImageUrl());
+            try {
+                fileStoragePort.deleteByKey(user.getProfileImageUrl());
+            } catch (Exception ignored) {
+                // 이미지 삭제 실패해도 회원탈퇴는 진행 -> 주비즈니스 로직이 중요하기 때문
+                // 고아 파일은 추후 스케줄러로 정리
+            }
         }
     }
 }
