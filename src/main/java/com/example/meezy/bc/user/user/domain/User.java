@@ -33,9 +33,10 @@ public class User extends AbstractAggregateRoot {
     @Column(nullable = false)
     private OauthProvider oauthProvider;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 50)
     private String accountId;
 
+    @Column(length = 100)
     private String name;
 
     private String password;
