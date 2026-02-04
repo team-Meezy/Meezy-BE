@@ -5,11 +5,14 @@ import com.example.meezy.bc.collaboration.meeting.domain.event.MeetingEndedEvent
 import com.example.meezy.bc.collaboration.meeting.domain.event.MeetingEvent;
 import com.example.meezy.bc.collaboration.meeting.domain.event.ParticipantJoinedEvent;
 import com.example.meezy.bc.collaboration.meeting.domain.event.ParticipantLeftEvent;
+import com.example.meezy.bc.user.user.domain.User;
+import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,11 +22,12 @@ import java.util.UUID;
 public class MeetingEventWebSocketPublisher implements MeetingEventPublisher {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
 
     @Override
     public void publish(MeetingEvent event) {
         UUID teamId = event.teamId();
-        String destination = "/topic/meeting/" + teamId; //해당 경로를 구독하는 사용자에게 브로드케스팅할 주소
+        String destination = "/topic/meeting/" + teamId;
 
         Object payload = createPayload(event);
 
@@ -34,24 +38,32 @@ public class MeetingEventWebSocketPublisher implements MeetingEventPublisher {
 
     private Object createPayload(MeetingEvent event) {
         return switch (event) {
-            //회의에 새롭게 참여했을 때
-            case ParticipantJoinedEvent e -> Map.of(
-                    "type", "participant-joined", //회의 참여 알림
-                    "meetingId", e.meetingId(),
-                    "joinedUserId", e.joinedUserId(),
-                    "existingParticipantIds", e.existingParticipantIds() //이미 회의에 존재하는 UserId
-            );
-            //회의를 나갔을 때
+            case ParticipantJoinedEvent e -> createParticipantJoinedPayload(e);
             case ParticipantLeftEvent e -> Map.of(
-                    "type", "participant-left", //회의 나가기 알림
+                    "type", "participant-left",
                     "meetingId", e.meetingId(),
                     "leftUserId", e.leftUserId()
             );
-            //회의가 종료 되었을 때
             case MeetingEndedEvent e -> Map.of(
-                    "type", "meeting-ended", //호의 종료 알림
+                    "type", "meeting-ended",
                     "meetingId", e.meetingId()
             );
         };
+    }
+
+    private Map<String, Object> createParticipantJoinedPayload(ParticipantJoinedEvent event) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "participant-joined");
+        payload.put("meetingId", event.meetingId());
+        payload.put("joinedUserId", event.joinedUserId());
+        payload.put("existingParticipantIds", event.existingParticipantIds());
+
+        userRepository.findByUserId_Value(event.joinedUserId())
+                .ifPresent(user -> {
+                    payload.put("joinedUserName", user.getName());
+                    payload.put("joinedUserProfileImageUrl", user.getProfileImageUrl());
+                });
+
+        return payload;
     }
 }

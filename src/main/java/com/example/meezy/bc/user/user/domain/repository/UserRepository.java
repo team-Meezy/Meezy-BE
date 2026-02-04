@@ -6,6 +6,7 @@ import com.example.meezy.bc.user.user.domain.vo.UserId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, UserId> {
     Optional<User> findByAccountId(String accountId);
     Optional<User> findByUserId_Value(UUID userId);
     Optional<User> findByUserId(UserId userId);
+    List<User> findByUserId_ValueIn(List<UUID> userIds);
 
     boolean existsByAccountId(String accountId);
     boolean existsByEmailAndOauthProvider(String email, OauthProvider oauthProvider);
