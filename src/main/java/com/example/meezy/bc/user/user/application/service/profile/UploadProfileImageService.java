@@ -8,6 +8,7 @@ import com.example.meezy.bc.user.user.domain.User;
 import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -18,6 +19,7 @@ public class UploadProfileImageService {
     private final CurrentUserQuery currentUserQuery;
     private final FileStoragePort fileStoragePort;
 
+    @Transactional
     public void upload(MultipartFile profileImage) {
         User user = userRepository.findByUserId(currentUserQuery.currentUser().userId())
                 .orElseThrow(UserNotFoundException::new);
@@ -28,12 +30,12 @@ public class UploadProfileImageService {
         try {
             user.uploadProfileImage(newImageUrl);
             userRepository.save(user);
-
-            deleteImage(oldImageUrl);
         } catch (Exception e) {
             deleteImage(newImageUrl);
             throw new ProfileImageUploadFailedException();
         }
+
+        deleteImage(oldImageUrl);
     }
 
     private void deleteImage(String imageUrl) {
