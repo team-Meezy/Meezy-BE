@@ -1,5 +1,6 @@
 package com.example.meezy.bc.user.user.presentation;
 
+import com.example.meezy.bc.sharedkernel.validation.NotEmptyMultipartFile;
 import com.example.meezy.bc.user.user.application.service.dto.request.ChangePasswordRequest;
 import com.example.meezy.bc.user.user.application.service.dto.request.WithdrawRequest;
 import com.example.meezy.bc.user.user.application.service.dto.response.MyProfileResponse;
@@ -10,9 +11,11 @@ import com.example.meezy.bc.user.user.application.service.profile.WithdrawServic
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Validated
 @RestController
 @RequestMapping("/profile")
 @RequiredArgsConstructor
@@ -35,7 +38,7 @@ public class ProfileController {
     
 
     @PatchMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void uploadProfileImage(@RequestPart MultipartFile profileImage) {
+    public void uploadProfileImage(@RequestPart @NotEmptyMultipartFile MultipartFile profileImage) {
         uploadProfileImageService.upload(profileImage);
     }
 

@@ -1,4 +1,4 @@
-package com.example.meezy.bc.collaboration.team.application.validation;
+package com.example.meezy.bc.sharedkernel.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
