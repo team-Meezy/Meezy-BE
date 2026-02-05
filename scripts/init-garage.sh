@@ -10,9 +10,12 @@ sleep 5
 echo "Checking Garage status..."
 docker exec meezy-garage /garage status
 
-# 노드 ID 가져오기
-NODE_ID=$(docker exec meezy-garage /garage node id -q 2>/dev/null | head -1)
-echo "Node ID: $NODE_ID"
+# 노드 ID 가져오기 (layout assign은 짧은 16자 ID만 필요)
+FULL_NODE_ID=$(docker exec meezy-garage /garage node id -q 2>/dev/null | head -1)
+# @ 앞 부분만 추출하고, 앞 16자만 사용
+NODE_ID=$(echo "$FULL_NODE_ID" | cut -d'@' -f1 | cut -c1-16)
+echo "Full Node ID: $FULL_NODE_ID"
+echo "Short Node ID: $NODE_ID"
 
 # 클러스터 레이아웃 설정
 echo "Configuring cluster layout..."
