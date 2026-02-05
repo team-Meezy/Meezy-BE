@@ -40,3 +40,7 @@ out/
 .claude/settings.local.json
 CLAUDE.md
 docs/CODE_STYLE.md
+
+### Docker
+.env
+meezyImage/garage.toml
