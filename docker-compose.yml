@@ -1,0 +1,149 @@
+services:
+  app:
+    image: hyohyeon08/meezy:latest
+    container_name: meezy-app
+    ports:
+      - "80:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      garage:
+        condition: service_started
+    environment:
+      # Database
+      DB_URL: jdbc:mysql://mysql:3306/meezy?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # RabbitMQ
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      ACCESS_EXP: ${ACCESS_EXP}
+      REFRESH_EXP: ${REFRESH_EXP}
+      HEADER: ${HEADER}
+      PREFIX: ${PREFIX}
+
+      # OAuth2
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+
+      # Mail
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      # OpenAI
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_FEEDBACK_PROMPT: ${AI_FEEDBACK_PROMPT}
+      AI_SUMMARY_PROMPT: ${AI_SUMMARY_PROMPT}
+
+      # Chat
+      CHAT_RABBIT_EXCHANGE_NAME: ${CHAT_RABBIT_EXCHANGE_NAME}
+      CHAT_RABBIT_QUEUE_PREFIX: ${CHAT_RABBIT_QUEUE_PREFIX}
+      CHAT_WS_ENDPOINT: ${CHAT_WS_ENDPOINT}
+      CHAT_WS_BROKER_PREFIX: ${CHAT_WS_BROKER_PREFIX}
+      CHAT_WS_APP_PREFIX: ${CHAT_WS_APP_PREFIX}
+      CHAT_WS_ALLOWED_ORIGINS: ${CHAT_WS_ALLOWED_ORIGINS}
+
+      BUCKET_NAME: ${BUCKET_NAME}
+      GARAGE_ENDPOINT: ${GARAGE_ENDPOINT}
+      MEEZY_IMAGE_FOLDER: ${MEEZY_IMAGE_FOLDER}
+      GARAGE_REGION: ${GARAGE_REGION}
+      GARAGE_ACCESS_KEY: ${GARAGE_ACCESS_KEY}
+      GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY}
+    networks:
+      - meezy-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: meezy-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: meezy
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meezy-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: meezy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - meezy-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: meezy-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meezy-network
+
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: meezy-garage
+    ports:
+      - "3900:3900"
+      - "3901:3901"
+      - "3902:3902"
+    environment:
+      GARAGE_ALLOW_WORLD_READABLE_SECRETS: "true"
+    volumes:
+      - garage-data:/var/lib/garage/data
+      - garage-meta:/var/lib/garage/meta
+      - ./meezyImage/garage.toml:/etc/garage.toml:ro
+    networks:
+      - meezy-network
+
+volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
+  garage-data:
+  garage-meta:
+
+networks:
+  meezy-network:
+    driver: bridge
