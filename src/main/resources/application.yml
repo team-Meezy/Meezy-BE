@@ -144,3 +144,6 @@ cloud:
     credentials:
       access-key: ${GARAGE_ACCESS_KEY}
       secret-key: ${GARAGE_SECRET_KEY}
+
+server:
+  forward-headers-strategy: framework
