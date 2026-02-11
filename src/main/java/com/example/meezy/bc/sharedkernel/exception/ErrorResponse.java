@@ -13,11 +13,20 @@ public record ErrorResponse(
         LocalDateTime timestamp
 ) {
 
-    public static ErrorResponse of(ErrorCode errorCode){
+    public static ErrorResponse of(ErrorCode errorCode) {
         return ErrorResponse.builder()
                 .httpStatus(errorCode.getHttpStatus())
                 .statusCode(errorCode.getHttpStatus().value())
                 .message(errorCode.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    public static ErrorResponse of(ErrorCode errorCode, String message) {
+        return ErrorResponse.builder()
+                .httpStatus(errorCode.getHttpStatus())
+                .statusCode(errorCode.getHttpStatus().value())
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
