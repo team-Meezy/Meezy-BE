@@ -15,8 +15,8 @@ COPY src ./src
 RUN gradle bootJar --no-daemon -x test
 
 # Run stage
-# JAR 파일로 다운로드. JAVA를 실행만 할 수 있는 버전
-FROM eclipse-temurin:21-jre
+# JRE → JDK로 변경 (VisualVM 전체 기능 지원을 위해)
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 # Build 스테이지에 있는 jar를 해당 컨테이너로 가져옴
