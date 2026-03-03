@@ -136,12 +136,10 @@ public class Meeting extends AbstractAggregateRoot {
         ));
     }
 
-    public void receiveRecording(byte[] audioData, String originalFilename, String contentType) {
+    public void receiveRecording(String s3Key) {
         registerEvent(new RecordingReceivedEvent(
                 meetingId.value(),
-                audioData,
-                originalFilename,
-                contentType
+                s3Key
         ));
     }
 

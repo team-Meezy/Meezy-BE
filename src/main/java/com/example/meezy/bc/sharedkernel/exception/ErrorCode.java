@@ -61,8 +61,10 @@ public enum ErrorCode {
     NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "해당 팀의 멤버가 아닙니다."),
 
     EMPTY_AUDIO_FILE(HttpStatus.BAD_REQUEST, "오디오 파일이 비어있습니다."),
-    INVALID_AUDIO_EXTENSION(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 파일 형식입니다. (mp3, wav만 가능)"),
+    INVALID_AUDIO_EXTENSION(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 파일 형식입니다. (mp3만 가능)"),
     INVALID_AUDIO_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 Content-Type입니다."),
+    AUDIO_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 업로드에 실패했습니다."),
+    AUDIO_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 다운로드에 실패했습니다."),
     AUDIO_CONVERSION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 변환 중 오류가 발생했습니다."),
 
     REPORT_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회의 리포트 생성에 실패했습니다."),
