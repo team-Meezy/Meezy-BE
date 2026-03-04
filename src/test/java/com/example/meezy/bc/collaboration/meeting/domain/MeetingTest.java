@@ -274,9 +274,8 @@ class MeetingTest {
         @DisplayName("녹음 수신 시 RecordingReceivedEvent가 발생한다")
         void receiveRecording_registers_event() {
             Meeting meeting = Meeting.start(teamId, hostUserId);
-            byte[] audioData = "test audio data".getBytes();
 
-            meeting.receiveRecording(audioData, "test.mp3", "audio/mpeg");
+            meeting.receiveRecording("recordings/test-key.mp3");
 
             assertThat(meeting.pullDomainEvents())
                     .hasAtLeastOneElementOfType(RecordingReceivedEvent.class);

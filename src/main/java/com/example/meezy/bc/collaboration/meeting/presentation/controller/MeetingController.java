@@ -1,12 +1,13 @@
 package com.example.meezy.bc.collaboration.meeting.presentation.controller;
 
 import com.example.meezy.bc.collaboration.meeting.application.service.*;
+import com.example.meezy.bc.collaboration.meeting.application.service.dto.request.ReceiveRecordingRequest;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.LeaveResponse;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -48,9 +49,9 @@ public class MeetingController {
     public void receiveRecording(
             @PathVariable UUID teamId,
             @PathVariable UUID meetingId,
-            @RequestParam("file") MultipartFile recording
+            @Valid @ModelAttribute ReceiveRecordingRequest request
     ) {
-        receiveRecordingService.receive(teamId, meetingId, recording);
+        receiveRecordingService.receive(teamId, meetingId, request.file());
     }
 
 }
