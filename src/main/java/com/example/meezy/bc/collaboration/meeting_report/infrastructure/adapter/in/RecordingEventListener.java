@@ -28,11 +28,10 @@ public class RecordingEventListener {
 
             reportGenerator.generate(event.meetingId(), transcript);
 
+            audioStoragePort.deleteAudio(event.s3Key());
             log.info("회의 리포트 생성 완료: meetingId={}", event.meetingId());
         } catch (Exception e) {
-            log.error("회의 리포트 생성 실패: meetingId={}", event.meetingId(), e);
-        } finally {
-            audioStoragePort.deleteAudio(event.s3Key());
+            log.error("회의 리포트 생성 실패 (S3 오디오 유지됨): meetingId={}, s3Key={}", event.meetingId(), event.s3Key(), e);
         }
     }
 }

@@ -51,7 +51,6 @@ public class MeetingController {
             @PathVariable UUID meetingId,
             @Valid @ModelAttribute ReceiveRecordingRequest request
     ) {
-        System.out.println("123232");
         receiveRecordingService.receive(teamId, meetingId, request.file());
     }
 

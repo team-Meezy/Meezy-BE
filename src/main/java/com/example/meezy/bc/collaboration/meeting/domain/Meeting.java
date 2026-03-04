@@ -137,6 +137,9 @@ public class Meeting extends AbstractAggregateRoot {
     }
 
     public void receiveRecording(String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) {
+            throw new IllegalArgumentException("s3Key는 null이거나 빈 값일 수 없습니다.");
+        }
         registerEvent(new RecordingReceivedEvent(
                 meetingId.value(),
                 s3Key

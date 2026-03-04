@@ -12,6 +12,9 @@ public class Mp3ChunkSplitter {
     private static final int MAX_CHUNK_SIZE = 24 * 1024 * 1024; // 24MB
 
     public List<byte[]> split(byte[] audioData) {
+        if (audioData == null || audioData.length == 0) {
+            return List.of();
+        }
         if (audioData.length <= MAX_CHUNK_SIZE) {
             return List.of(audioData);
         }

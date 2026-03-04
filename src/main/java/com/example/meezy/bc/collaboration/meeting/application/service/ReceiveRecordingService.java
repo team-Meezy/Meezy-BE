@@ -9,13 +9,17 @@ import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepos
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
 import com.example.meezy.bc.sharedkernel.file.AudioStoragePort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReceiveRecordingService {
@@ -34,6 +38,17 @@ public class ReceiveRecordingService {
         meeting.validateBelongsToTeam(TeamId.of(teamId));
 
         String s3Key = audioStoragePort.uploadAudio(recording);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == STATUS_ROLLED_BACK) {
+                    log.warn("트랜잭션 롤백으로 S3 오디오 삭제: key={}", s3Key);
+                    audioStoragePort.deleteAudio(s3Key);
+                }
+            }
+        });
+
         meeting.receiveRecording(s3Key);
 
         publishEvents(meeting);
