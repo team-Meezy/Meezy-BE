@@ -3,6 +3,7 @@ package com.example.meezy.config.security;
 import com.example.meezy.bc.user.user.application.service.internal.TokenService;
 import com.example.meezy.bc.user.user.infrastructure.security.jwt.JwtTokenFilter;
 import com.example.meezy.bc.user.user.infrastructure.security.oauth.CustomOauthService;
+import com.example.meezy.bc.user.user.infrastructure.security.oauth.OauthRedirectProperties;
 import com.example.meezy.bc.user.user.infrastructure.security.oauth.handler.OauthFailureHandler;
 import com.example.meezy.bc.user.user.infrastructure.security.oauth.handler.OauthSuccessHandler;
 import com.example.meezy.bc.user.user.infrastructure.security.util.TokenResolver;
@@ -35,6 +36,7 @@ public class SecurityConfig {
     private final TokenResolver tokenResolver;
     private final TokenService tokenService;
     private final ObjectMapper objectMapper;
+    private final OauthRedirectProperties oauthRedirectProperties;
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -76,7 +78,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(List.of(oauthRedirectProperties.frontendUrl()));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
