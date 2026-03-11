@@ -150,5 +150,9 @@ cloud:
       access-key: ${GARAGE_ACCESS_KEY}
       secret-key: ${GARAGE_SECRET_KEY}
 
+oauth:
+  redirect:
+    frontend-url: ${FRONTEND_URL}
+
 server:
   forward-headers-strategy: framework

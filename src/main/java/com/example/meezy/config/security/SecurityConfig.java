@@ -9,6 +9,7 @@ import com.example.meezy.bc.user.user.infrastructure.security.util.TokenResolver
 import com.example.meezy.config.exception.GlobalExceptionFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -36,6 +37,9 @@ public class SecurityConfig {
     private final TokenService tokenService;
     private final ObjectMapper objectMapper;
 
+    @Value("${oauth.redirect.frontend-url}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http, CustomOauthService customOauthService,
@@ -57,6 +61,7 @@ public class SecurityConfig {
                                 .baseUri("/login/oauth2/code/{registrationId}")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
+                        .requestMatchers("/ws-chat/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reissue").permitAll()
@@ -76,7 +81,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
