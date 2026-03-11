@@ -46,6 +46,9 @@ services:
       HEADER: ${HEADER}
       PREFIX: ${PREFIX}
 
+      # Frontend
+      FRONTEND_URL: ${FRONTEND_URL}
+
       # OAuth2
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
