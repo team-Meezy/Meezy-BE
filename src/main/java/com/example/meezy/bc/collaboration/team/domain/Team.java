@@ -73,6 +73,15 @@ public class Team extends AbstractAggregateRoot {
         members.remove(member);
     }
 
+    public void leaveTeam(UserId requesterId) {
+        if (isLeader(requesterId)) {
+            throw new LeaderCannotLeaveException();
+        }
+
+        TeamMember member = findMemberByUserId(requesterId);
+        members.remove(member);
+    }
+
     public InviteCode generateInviteCode(UserId requesterId) {
         validateLeaderPermission(requesterId);
         InviteCode inViteCode = InviteCode.generate();
@@ -130,6 +139,13 @@ public class Team extends AbstractAggregateRoot {
                 .anyMatch(member -> member.getUserId().equals(userId));
     }
 
+
+    private TeamMember findMemberByUserId(UserId userId) {
+        return members.stream()
+                .filter(member -> member.getUserId().equals(userId))
+                .findFirst()
+                .orElseThrow(TeamMemberNotFoundException::new);
+    }
 
     private TeamMember findMemberById(TeamMemberId memberId) {
         return members.stream()

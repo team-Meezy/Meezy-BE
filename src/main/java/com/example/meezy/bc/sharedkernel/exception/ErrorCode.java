@@ -43,6 +43,7 @@ public enum ErrorCode {
     DUPLICATE_TEAM_MEMBER(HttpStatus.CONFLICT, "이미 팀에 참가한 유저입니다."),
     TEAM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 멤버를 찾을 수 없습니다."),
     CANNOT_REMOVE_LEADER(HttpStatus.BAD_REQUEST, "리더는 팀에서 제거할 수 없습니다."),
+    LEADER_CANNOT_LEAVE(HttpStatus.BAD_REQUEST, "팀 리더는 팀을 나갈 수 없습니다."),
     INVITE_CODE_NOT_GENERATED(HttpStatus.BAD_REQUEST, "초대 코드가 생성되지 않았습니다."),
     INVITE_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "초대 코드가 만료되었습니다."),
     INVALID_INVITE_CODE(HttpStatus.BAD_REQUEST, "초대 코드가 일치하지 않습니다."),

@@ -6,6 +6,7 @@ import com.example.meezy.bc.collaboration.team.application.service.dto.request.U
 import com.example.meezy.bc.collaboration.team.application.service.dto.response.TeamResponse;
 import com.example.meezy.bc.collaboration.team.application.service.team.CreateTeamService;
 import com.example.meezy.bc.collaboration.team.application.service.team.DeleteTeamService;
+import com.example.meezy.bc.collaboration.team.application.service.team.LeaveTeamService;
 import com.example.meezy.bc.collaboration.team.application.service.team.QueryTeamService;
 import com.example.meezy.bc.collaboration.team.application.service.team.UpdateTeamService;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ public class TeamController {
     private final CreateTeamService createTeamService;
     private final UpdateTeamService updateTeamService;
     private final DeleteTeamService deleteTeamService;
+    private final LeaveTeamService leaveTeamService;
     private final QueryTeamService queryTeamService;
 
     @PostMapping
@@ -54,6 +56,11 @@ public class TeamController {
             @Valid @ModelAttribute UpdateServerImageRequest request
     ) {
         updateTeamService.updateServerImage(teamId, request);
+    }
+
+    @DeleteMapping("/{teamId}/leave")
+    public void leave(@PathVariable UUID teamId) {
+        leaveTeamService.leave(teamId);
     }
 
     @DeleteMapping("/{teamId}")
