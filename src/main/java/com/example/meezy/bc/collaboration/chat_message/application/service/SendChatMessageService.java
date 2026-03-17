@@ -1,5 +1,6 @@
 package com.example.meezy.bc.collaboration.chat_message.application.service;
 
+import com.example.meezy.bc.sharedkernel.user.AuthenticatedUser;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.collaboration.chat_message.application.port.out.ChatMessagePublishPort;
 import com.example.meezy.bc.collaboration.chat_message.application.service.dto.event.ChatMessageEvent;
@@ -35,9 +36,14 @@ public class SendChatMessageService {
 
         validateTeamOwnership(chatRoom, teamId);
 
-        String senderName = currentUserQuery.currentUser().name();
+        AuthenticatedUser sender = currentUserQuery.currentUser();
 
-        ChatMessage chatMessage = ChatMessage.create(chatRoom.getChatRoomId(), senderName, request.content());
+        ChatMessage chatMessage = ChatMessage.create(
+                chatRoom.getChatRoomId(),
+                sender.name(),
+                sender.profileImageUrl(),
+                request.content()
+        );
         chatMessageRepository.save(chatMessage);
 
         chatMessagePublishPort.publish(ChatMessageEvent.from(chatMessage, chatRoomId))

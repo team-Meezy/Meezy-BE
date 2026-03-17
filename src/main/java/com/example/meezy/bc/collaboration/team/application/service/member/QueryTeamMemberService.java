@@ -31,14 +31,26 @@ public class QueryTeamMemberService {
                 .map(m -> m.getUserId().value())
                 .toList();
 
-        Map<UUID, String> nameMap = userRepository.findByUserId_ValueIn(userIds).stream()
+        List<User> users = userRepository.findByUserId_ValueIn(userIds);
+
+        Map<UUID, String> nameMap = users.stream()
                 .collect(Collectors.toMap(
                         u -> u.getUserId().value(),
                         User::getName
                 ));
 
+        Map<UUID, String> profileImageMap = users.stream()
+                .collect(Collectors.toMap(
+                        u -> u.getUserId().value(),
+                        u -> u.getProfileImageUrl() != null ? u.getProfileImageUrl() : ""
+                ));
+
         return team.getMembers().stream()
-                .map(m -> TeamMemberResponse.from(m, nameMap.get(m.getUserId().value())))
+                .map(m -> TeamMemberResponse.from(
+                        m,
+                        nameMap.get(m.getUserId().value()),
+                        profileImageMap.get(m.getUserId().value())
+                ))
                 .toList();
     }
 }

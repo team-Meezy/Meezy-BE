@@ -7,6 +7,7 @@ import lombok.Builder;
 public record AuthenticatedUser(
         UserId userId,
         String accountId,
-        String name
+        String name,
+        String profileImageUrl
 ) {
 }

@@ -25,6 +25,7 @@ public class CurrentUserAdapter implements CurrentUserQuery {
                 .userId(detachedUser.getUserId())
                 .accountId(detachedUser.getAccountId())
                 .name(detachedUser.getName())
+                .profileImageUrl(detachedUser.getProfileImageUrl())
                 .build();
     }
 }

@@ -27,17 +27,20 @@ public class ChatMessage extends AbstractAggregateRoot {
     @Column(nullable = false)
     private String senderName;
 
+    private String senderProfileImageUrl;
+
     @Column(nullable = false, columnDefinition = "VARCHAR(1000)")
     private String content;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public static ChatMessage create(ChatRoomId chatRoomId, String senderName, String content){
+    public static ChatMessage create(ChatRoomId chatRoomId, String senderName, String senderProfileImageUrl, String content){
         return ChatMessage.builder()
                 .chatMessageId(ChatMessageId.newId())
                 .chatRoomId(chatRoomId)
                 .senderName(senderName)
+                .senderProfileImageUrl(senderProfileImageUrl)
                 .content(content)
                 .createdAt(LocalDateTime.now())
                 .build();

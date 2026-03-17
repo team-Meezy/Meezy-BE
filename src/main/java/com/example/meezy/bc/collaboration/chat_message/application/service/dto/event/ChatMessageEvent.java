@@ -11,6 +11,7 @@ public record ChatMessageEvent(
         UUID chatRoomId,
         UUID chatMessageId,
         String senderName,
+        String senderProfileImageUrl,
         String content,
         LocalDateTime createdAt
 ) {
@@ -20,6 +21,7 @@ public record ChatMessageEvent(
                 .chatRoomId(chatRoomId)
                 .chatMessageId(chatMessage.getChatMessageId().value())
                 .senderName(chatMessage.getSenderName())
+                .senderProfileImageUrl(chatMessage.getSenderProfileImageUrl())
                 .content(chatMessage.getContent())
                 .createdAt(chatMessage.getCreatedAt())
                 .build();

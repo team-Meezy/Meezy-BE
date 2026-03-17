@@ -10,6 +10,7 @@ import java.util.UUID;
 public record ChatMessageResponse(
         UUID chatMessageId,
         String senderName,
+        String senderProfileImageUrl,
         String content,
         LocalDateTime createdAt
 ) {
@@ -18,6 +19,7 @@ public record ChatMessageResponse(
         return ChatMessageResponse.builder()
                 .chatMessageId(chatMessage.getChatMessageId().value())
                 .senderName(chatMessage.getSenderName())
+                .senderProfileImageUrl(chatMessage.getSenderProfileImageUrl())
                 .content(chatMessage.getContent())
                 .createdAt(chatMessage.getCreatedAt())
                 .build();
