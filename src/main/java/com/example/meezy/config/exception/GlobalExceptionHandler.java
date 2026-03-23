@@ -1,10 +1,12 @@
 package com.example.meezy.config.exception;
 
 
+import com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.exception.ChatMessageRateLimitExceededException;
 import com.example.meezy.bc.sharedkernel.exception.CustomException;
 import com.example.meezy.bc.sharedkernel.exception.ErrorCode;
 import com.example.meezy.bc.sharedkernel.exception.ErrorResponse;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,19 @@ public class GlobalExceptionHandler {
                 .orElse(ErrorCode.INVALID_INPUT_VALUE.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, message);
+        return ResponseEntity.status(errorResponse.httpStatus())
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(ChatMessageRateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> chatMessageRateLimitExceededExceptionHandling(ChatMessageRateLimitExceededException e) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .httpStatus(HttpStatus.TOO_MANY_REQUESTS)
+                .statusCode(HttpStatus.TOO_MANY_REQUESTS.value())
+                .message(e.getMessage())
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+
         return ResponseEntity.status(errorResponse.httpStatus())
                 .body(errorResponse);
     }

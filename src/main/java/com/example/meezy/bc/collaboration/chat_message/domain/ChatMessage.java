@@ -11,7 +11,12 @@ import java.time.LocalDateTime;
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "tbl_chat_message")
+@Table(
+        name = "tbl_chat_message",
+        indexes = {
+                @Index(name = "idx_chat_message_room_created", columnList = "chat_room_id, created_at, chat_message_id")
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ChatMessage extends AbstractAggregateRoot {
@@ -35,14 +40,20 @@ public class ChatMessage extends AbstractAggregateRoot {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public static ChatMessage create(ChatRoomId chatRoomId, String senderName, String senderProfileImageUrl, String content){
+    public static ChatMessage create(
+            ChatRoomId chatRoomId,
+            String senderName,
+            String senderProfileImageUrl,
+            String content,
+            LocalDateTime createdAt
+    ){
         return ChatMessage.builder()
                 .chatMessageId(ChatMessageId.newId())
                 .chatRoomId(chatRoomId)
                 .senderName(senderName)
                 .senderProfileImageUrl(senderProfileImageUrl)
                 .content(content)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
     }
 }

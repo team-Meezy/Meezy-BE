@@ -28,7 +28,7 @@ public class QueryChatMessageService {
 
         validateTeamOwnership(chatRoom, teamId);
 
-        return chatMessageRepository.findAllByChatRoomId(chatRoom.getChatRoomId()).stream()
+        return chatMessageRepository.findAllByChatRoomIdOrderByCreatedAtAscChatMessageIdAsc(chatRoom.getChatRoomId()).stream()
                 .map(ChatMessageResponse::from)
                 .toList();
     }

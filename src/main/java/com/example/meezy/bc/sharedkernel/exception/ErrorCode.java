@@ -73,7 +73,10 @@ public enum ErrorCode {
 
     MEETING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의 리포트를 찾을 수 없습니다."),
 
-    PARTICIPATION_METRICS_NOT_FOUND(HttpStatus.NOT_FOUND, "참여 지표를 찾을 수 없습니다.");
+    PARTICIPATION_METRICS_NOT_FOUND(HttpStatus.NOT_FOUND, "참여 지표를 찾을 수 없습니다."),
+
+    CHAT_MESSAGE_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "메시지를 너무 빠르게 전송하고 있습니다. 잠시 후 다시 시도해주세요.");
+
 
     private final HttpStatus httpStatus;
     private final String message;
