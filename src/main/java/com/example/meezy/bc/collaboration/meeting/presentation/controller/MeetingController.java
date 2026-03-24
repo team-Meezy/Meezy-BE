@@ -46,12 +46,13 @@ public class MeetingController {
     }
 
     @PostMapping("/{meetingId}/recording")
-    public void receiveRecording(
+    public ResponseEntity<Void> receiveRecording(
             @PathVariable UUID teamId,
             @PathVariable UUID meetingId,
             @Valid @ModelAttribute ReceiveRecordingRequest request
     ) {
         receiveRecordingService.receive(teamId, meetingId, request.file());
+        return ResponseEntity.accepted().build();
     }
 
 }

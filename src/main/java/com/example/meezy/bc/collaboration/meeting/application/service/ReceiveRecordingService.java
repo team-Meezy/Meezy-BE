@@ -2,21 +2,13 @@ package com.example.meezy.bc.collaboration.meeting.application.service;
 
 import com.example.meezy.bc.collaboration.meeting.application.service.exception.EmptyRecordingException;
 import com.example.meezy.bc.collaboration.meeting.application.service.exception.InvalidRecordingFormatException;
-import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
-import com.example.meezy.bc.collaboration.meeting.domain.event.RecordingReceivedEvent;
-import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingNotFoundException;
-import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
-import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
-import com.example.meezy.bc.sharedkernel.file.AudioStoragePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.UUID;
 
 @Slf4j
@@ -24,34 +16,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReceiveRecordingService {
 
-    private final MeetingRepository meetingRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final AudioStoragePort audioStoragePort;
+    private final RecordingAsyncProcessor asyncProcessor;
 
-    @Transactional
     public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
+        // ① 파일 형식 검증만 (DB 접근 없음)
         validateRecording(recording);
 
-        Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
-                .orElseThrow(MeetingNotFoundException::new);
+        // ② Spring multipart 임시파일 경로 직접 사용 (복사 없음)
+        Path tempFile = extractTempFilePath(recording);
 
-        meeting.validateBelongsToTeam(TeamId.of(teamId));
+        // ③ 비동기: 팀 검증 + S3 업로드 + DB 저장
+        asyncProcessor.process(teamId, meetingId, tempFile);
+    }
 
-        String s3Key = audioStoragePort.uploadAudio(recording);
-
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(int status) {
-                if (status == STATUS_ROLLED_BACK) {
-                    log.warn("트랜잭션 롤백으로 S3 오디오 삭제: key={}", s3Key);
-                    audioStoragePort.deleteAudio(s3Key);
-                }
-            }
-        });
-
-        meeting.receiveRecording(s3Key);
-
-        publishEvents(meeting);
+    private Path extractTempFilePath(MultipartFile recording) {
+        try {
+            File tempFile = File.createTempFile("recording-", ".mp3");
+            recording.transferTo(tempFile);
+            return tempFile.toPath();
+        } catch (Exception e) {
+            throw new RuntimeException("임시 파일 저장 실패", e);
+        }
     }
 
     private void validateRecording(MultipartFile recording) {
@@ -68,13 +53,5 @@ public class ReceiveRecordingService {
         if (contentType == null || !contentType.equals("audio/mpeg")) {
             throw new InvalidRecordingFormatException();
         }
-    }
-
-    private void publishEvents(Meeting meeting) {
-        meeting.pullDomainEvents().forEach(event -> {
-            if (event instanceof RecordingReceivedEvent recordingEvent) {
-                eventPublisher.publishEvent(recordingEvent);
-            }
-        });
     }
 }
