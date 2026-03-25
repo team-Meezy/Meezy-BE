@@ -41,6 +41,9 @@ out/
 CLAUDE.md
 docs/CODE_STYLE.md
 
+### Gradle
+gradle.properties
+
 ### Docker
 .env
 meezyImage/garage.toml
