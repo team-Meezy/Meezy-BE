@@ -30,11 +30,15 @@ public class RecordingAsyncProcessor {
 
             try {
                 // ③ DB 저장 + 이벤트 발행
-                transactionHandler.saveRecording(meetingId, s3Key);
+                transactionHandler.saveRecording(teamId, meetingId, s3Key);
                 log.info("녹음 비동기 처리 완료: meetingId={}, s3Key={}", meetingId, s3Key);
             } catch (Exception e) {
                 log.error("녹음 DB 저장 실패, S3 파일 삭제: key={}", s3Key, e);
-                audioStoragePort.deleteAudio(s3Key);
+                try {
+                    audioStoragePort.deleteAudio(s3Key);
+                } catch (Exception deleteEx) {
+                    log.error("S3 보상 삭제 실패 (고아 파일 발생): key={}", s3Key, deleteEx);
+                }
             }
         } catch (Exception e) {
             log.error("녹음 비동기 처리 실패: meetingId={}", meetingId, e);
