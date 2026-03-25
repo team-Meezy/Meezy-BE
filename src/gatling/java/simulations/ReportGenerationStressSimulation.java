@@ -50,7 +50,7 @@ public class ReportGenerationStressSimulation extends Simulation {
                     .contentType("audio/mpeg")
                     .fileName("test-recording.mp3")
             ).asMultipartForm()
-            .check(status().in(200, 500))
+            .check(status().in(202, 500))
     );
 
     ChainBuilder healthCheck = exec(
