@@ -50,7 +50,7 @@ public class ReportGenerationStressSimulation extends Simulation {
                     .contentType("audio/mpeg")
                     .fileName("test-recording.mp3")
             ).asMultipartForm()
-            .check(status().in(202, 500))
+            .check(status().is(202))
     );
 
     ChainBuilder healthCheck = exec(
@@ -96,6 +96,8 @@ public class ReportGenerationStressSimulation extends Simulation {
         ).protocols(httpProtocol)
          .assertions(
              forAll().responseTime().percentile3().lt(10000),
+             details("Stress Upload Recording")
+                 .successfulRequests().percent().gt(95.0),
              details("Health Check - Active Meeting")
                  .responseTime().percentile3().lt(3000)
          );
