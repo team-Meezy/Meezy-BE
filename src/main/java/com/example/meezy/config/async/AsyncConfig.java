@@ -19,10 +19,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("async-");
-        executor.setRejectedExecutionHandler((runnable, pool) ->
-            log.warn("비동기 작업 거부됨: 큐 가득 참 (poolSize={}, queueSize={})",
-                pool.getPoolSize(), pool.getQueue().size())
-        );
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;
     }
