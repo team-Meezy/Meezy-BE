@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'io.gatling.gradle' version '3.13.4'
 }
 
 group = 'com.example'
@@ -52,8 +53,28 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j:9.3.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    gatlingImplementation 'io.gatling:gatling-core-java:3.13.4'
+    gatlingImplementation 'io.gatling:gatling-http-java:3.13.4'
+    gatlingImplementation 'io.gatling.highcharts:gatling-charts-highcharts:3.13.4'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('compileGatlingJava') {
+    options.release = 17
+}
+
+gatling {
+    def gatlingJvmBaseArgs = [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED'
+    ]
+    def forwardKeys = ['baseUrl','wsBaseUrl','users','durationSeconds','rampUpSeconds',
+        'teamId','meetingId','accountId','password','burstUsers','messagesPerUser',
+        'fromUserId','toUserId','wsEndpoint','jwtHeader','jwtPrefix','accessToken'] as Set
+    jvmArgs = gatlingJvmBaseArgs + System.properties
+        .findAll { k, v -> forwardKeys.contains(k) }
+        .collect { k, v -> "-D${k}=${v}" as String }
+
 }
