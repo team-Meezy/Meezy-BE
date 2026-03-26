@@ -24,9 +24,11 @@ public final class TestEnvironmentHelper {
 
     public static ChainBuilder requireSessionAttribute(String attribute, String flag) {
         return exec(session -> {
-            if (!session.contains(attribute)) {
+            if (!session.contains(attribute)
+                    || session.getString(attribute) == null
+                    || session.getString(attribute).isBlank()) {
                 System.err.println("[FAIL-FAST] Session attribute '" + attribute
-                    + "' is missing. Provide " + flag + " system property.");
+                    + "' is missing or blank. Provide " + flag + " system property.");
                 return session.markAsFailed();
             }
             return session;
@@ -88,11 +90,11 @@ public final class TestEnvironmentHelper {
                 .check(status().saveAs("activeMeetingStatus"))
                 .check(bodyString().optional().saveAs("activeMeetingBody"))
         ).exec(
-            doIf(session -> "200".equals(session.getString("activeMeetingStatus"))).then(
+            doIf(session -> session.getInt("activeMeetingStatus") == 200).then(
                 exec(TestEnvironmentHelper::extractActiveMeeting)
             )
         ).exec(
-            doIf(session -> !"200".equals(session.getString("activeMeetingStatus"))).then(
+            doIf(session -> session.getInt("activeMeetingStatus") != 200).then(
                 exec(
                     http("Start Meeting")
                         .post("/teams/#{teamId}/meetings")
@@ -111,22 +113,24 @@ public final class TestEnvironmentHelper {
         String accessToken = session.getString("accessToken");
 
         if (accessToken == null || accessToken.isBlank()) {
+            System.err.println("[FAIL-FAST] accessToken is missing or blank.");
             return session.markAsFailed();
         }
 
         String[] parts = accessToken.split("\\.");
 
         if (parts.length < 2) {
-            throw new IllegalStateException("Invalid JWT format");
+            System.err.println("[FAIL-FAST] Invalid JWT format: expected 3 parts, got " + parts.length);
+            return session.markAsFailed();
         }
 
-        String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-
         try {
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             Map<String, Object> payload = OBJECT_MAPPER.readValue(payloadJson, new TypeReference<>() {});
             return session.set("currentUserId", payload.get("sub").toString());
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to decode JWT subject", e);
+            System.err.println("[FAIL-FAST] Failed to decode JWT subject: " + e.getMessage());
+            return session.markAsFailed();
         }
     }
 
