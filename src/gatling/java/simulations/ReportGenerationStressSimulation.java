@@ -71,11 +71,13 @@ public class ReportGenerationStressSimulation extends Simulation {
         .exitHereIfFailed()
         .exec(uploadRecording);
 
-    // Phase B: 일반 API 응답성 모니터링 (순수 조회만, 부트스트랩 없음)
+    // Phase B: 일반 API 응답성 모니터링 (순수 조회만, 부트스트랩 없음// -DteamId 필수: 독립 세션이므로 uploadBurst의 teamId를 공유받지 못함
     ScenarioBuilder healthProbes = scenario("Health Probes During Stress")
         .exec(authenticate)
         .exitHereIfFailed()
         .exec(TestEnvironmentHelper.seedProvidedIds())
+        .exec(TestEnvironmentHelper.requireSessionAttribute("teamId", "-DteamId"))
+        .exitHereIfFailed()
         .pause(5)
         .repeat(20).on(
             exec(healthCheck).pause(1)

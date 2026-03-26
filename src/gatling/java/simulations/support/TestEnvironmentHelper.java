@@ -22,6 +22,17 @@ public final class TestEnvironmentHelper {
 
     private TestEnvironmentHelper() {}
 
+    public static ChainBuilder requireSessionAttribute(String attribute, String flag) {
+        return exec(session -> {
+            if (!session.contains(attribute)) {
+                System.err.println("[FAIL-FAST] Session attribute '" + attribute
+                    + "' is missing. Provide " + flag + " system property.");
+                return session.markAsFailed();
+            }
+            return session;
+        });
+    }
+
     public static ChainBuilder seedProvidedIds() {
         return exec(session -> {
             Session current = session;
