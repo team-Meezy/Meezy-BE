@@ -6,6 +6,7 @@ import com.example.meezy.bc.collaboration.meeting.application.service.dto.reques
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingNotFoundException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalRecipientNotInMeetingException;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalRecipientRequiredException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalSenderMismatchException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalSenderNotInMeetingException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
@@ -152,6 +153,23 @@ class RelaySignalServiceTest {
 
         assertThatThrownBy(() -> relaySignalService.relay(teamIdValue, message))
                 .isInstanceOf(SignalRecipientNotInMeetingException.class);
+    }
+
+    @Test
+    @DisplayName("toUserId가 null이면 시그널을 보낼 수 없다")
+    void relay_throws_when_recipient_is_null() {
+        SignalMessage message = new SignalMessage.Offer(
+                senderUserId.value(), null, "sdp-data"
+        );
+
+        given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
+        given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                .willReturn(true);
+        given(meetingRepository.findByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
+                .willReturn(Optional.of(meeting));
+
+        assertThatThrownBy(() -> relaySignalService.relay(teamIdValue, message))
+                .isInstanceOf(SignalRecipientRequiredException.class);
     }
 
     @Test
