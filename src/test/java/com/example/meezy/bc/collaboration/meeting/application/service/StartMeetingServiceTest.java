@@ -78,11 +78,11 @@ class StartMeetingServiceTest {
     @Test
     @DisplayName("회의를 시작할 수 있다")
     void start_creates_meeting() {
-        given(teamRepository.findByTeamId_Value(teamIdValue)).willReturn(Optional.of(team));
+        given(teamRepository.findByTeamIdForUpdate(teamIdValue)).willReturn(Optional.of(team));
         given(team.getTeamId()).willReturn(teamId);
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
-        given(meetingRepository.findByTeamIdAndStatusForUpdate(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
-                .willReturn(Optional.empty());
+        given(meetingRepository.existsByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
+                .willReturn(false);
         given(userRepository.findByUserId_ValueIn(any())).willReturn(List.of());
         given(iceServerQueryPort.getIceServers()).willReturn(List.of());
 
@@ -97,7 +97,7 @@ class StartMeetingServiceTest {
     @Test
     @DisplayName("존재하지 않는 팀에서는 회의를 시작할 수 없다")
     void start_throws_when_team_not_found() {
-        given(teamRepository.findByTeamId_Value(teamIdValue)).willReturn(Optional.empty());
+        given(teamRepository.findByTeamIdForUpdate(teamIdValue)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> startMeetingService.start(teamIdValue))
                 .isInstanceOf(TeamNotFoundException.class);
@@ -106,11 +106,10 @@ class StartMeetingServiceTest {
     @Test
     @DisplayName("이미 진행 중인 회의가 있으면 새 회의를 시작할 수 없다")
     void start_throws_when_meeting_already_exists() {
-        Meeting existingMeeting = Meeting.start(teamId, userId);
-        given(teamRepository.findByTeamId_Value(teamIdValue)).willReturn(Optional.of(team));
+        given(teamRepository.findByTeamIdForUpdate(teamIdValue)).willReturn(Optional.of(team));
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
-        given(meetingRepository.findByTeamIdAndStatusForUpdate(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
-                .willReturn(Optional.of(existingMeeting));
+        given(meetingRepository.existsByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
+                .willReturn(true);
 
         assertThatThrownBy(() -> startMeetingService.start(teamIdValue))
                 .isInstanceOf(MeetingAlreadyExistsException.class);

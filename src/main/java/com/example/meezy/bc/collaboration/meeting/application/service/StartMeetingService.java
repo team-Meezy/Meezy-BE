@@ -34,11 +34,11 @@ public class StartMeetingService {
 
     @Transactional
     public MeetingResponse start(UUID teamId) {
-        Team team = findTeamOrThrow(teamId);
+        Team team = lockTeamOrThrow(teamId);
 
         team.validateLeaderPermission(currentUserQuery.currentUser().userId());
 
-        validateNoActiveMeetingWithLock(teamId);
+        validateNoActiveMeeting(teamId);
 
         Meeting meeting = Meeting.start(
                 team.getTeamId(),
@@ -55,13 +55,14 @@ public class StartMeetingService {
         return MeetingResponse.from(meeting, users, iceServers);
     }
 
-    private Team findTeamOrThrow(UUID teamId) {
-        return teamRepository.findByTeamId_Value(teamId)
+    private Team lockTeamOrThrow(UUID teamId) {
+        return teamRepository.findByTeamIdForUpdate(teamId)
                 .orElseThrow(TeamNotFoundException::new);
     }
 
-    private void validateNoActiveMeetingWithLock(UUID teamId) {
-        meetingRepository.findByTeamIdAndStatusForUpdate(TeamId.of(teamId), MeetingStatus.ACTIVE)
-                .ifPresent(existing -> { throw new MeetingAlreadyExistsException(); });
+    private void validateNoActiveMeeting(UUID teamId) {
+        if (meetingRepository.existsByTeamIdAndStatus(TeamId.of(teamId), MeetingStatus.ACTIVE)) {
+            throw new MeetingAlreadyExistsException();
+        }
     }
 }
