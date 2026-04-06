@@ -1,7 +1,7 @@
-package com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.out.redis;
+package com.example.meezy.bc.collaboration.meeting.infrastructure.adapter.out.redis;
 
-import com.example.meezy.bc.collaboration.chat_message.application.port.out.ChatMessageRateLimitPort;
-import com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.exception.ChatMessageRateLimitExceededException;
+import com.example.meezy.bc.collaboration.meeting.application.port.out.SignalRateLimitPort;
+import com.example.meezy.bc.collaboration.meeting.infrastructure.adapter.exception.SignalRateLimitExceededException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -12,10 +12,10 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class ChatMessageRateLimiter implements ChatMessageRateLimitPort {
+public class SignalRateLimiter implements SignalRateLimitPort {
 
     private static final long WINDOW_SECONDS = 1;
-    private static final long MAX_MESSAGES_PER_WINDOW = 5;
+    private static final long MAX_SIGNALS_PER_WINDOW = 30;
 
     private static final DefaultRedisScript<Long> RATE_LIMIT_SCRIPT;
 
@@ -31,8 +31,8 @@ public class ChatMessageRateLimiter implements ChatMessageRateLimitPort {
 
     private final StringRedisTemplate redisTemplate;
 
-    public void validate(UUID userId, UUID chatRoomId) {
-        String key = "chat:rate:%s:%s".formatted(userId, chatRoomId);
+    public void validate(UUID userId, UUID teamId) {
+        String key = "signal:rate:%s:%s".formatted(userId, teamId);
 
         Long count = redisTemplate.execute(
                 RATE_LIMIT_SCRIPT,
@@ -40,8 +40,8 @@ public class ChatMessageRateLimiter implements ChatMessageRateLimitPort {
                 String.valueOf(WINDOW_SECONDS)
         );
 
-        if (count == null || count > MAX_MESSAGES_PER_WINDOW) {
-            throw new ChatMessageRateLimitExceededException();
+        if (count == null || count > MAX_SIGNALS_PER_WINDOW) {
+            throw new SignalRateLimitExceededException();
         }
     }
 }

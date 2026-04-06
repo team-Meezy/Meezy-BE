@@ -8,7 +8,7 @@ import com.example.meezy.bc.collaboration.chat_message.application.service.dto.r
 import com.example.meezy.bc.collaboration.chat_message.application.service.dto.response.ChatMessageResponse;
 import com.example.meezy.bc.collaboration.chat_message.domain.ChatMessage;
 import com.example.meezy.bc.collaboration.chat_message.domain.repository.ChatMessageRepository;
-import com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.out.redis.ChatMessageRateLimiter;
+import com.example.meezy.bc.collaboration.chat_message.application.port.out.ChatMessageRateLimitPort;
 import com.example.meezy.bc.collaboration.chat_room.application.service.exception.ChatRoomNotFoundException;
 import com.example.meezy.bc.collaboration.chat_room.domain.ChatRoom;
 import com.example.meezy.bc.collaboration.chat_room.domain.repository.ChatRoomRepository;
@@ -37,7 +37,7 @@ public class SendChatMessageService {
     private final CurrentUserQuery currentUserQuery;
     private final ChatMessagePublishPort chatMessagePublishPort;
     private final UserRepository userRepository;
-    private final ChatMessageRateLimiter chatMessageRateLimiter;
+    private final ChatMessageRateLimitPort chatMessageRateLimitPort;
     private final Clock appClock;
 
     @Transactional
@@ -48,7 +48,7 @@ public class SendChatMessageService {
         validateTeamOwnership(chatRoom, teamId);
 
         AuthenticatedUser sender = currentUserQuery.currentUser();
-        chatMessageRateLimiter.validate(sender.userId().value(), chatRoomId);
+        chatMessageRateLimitPort.validate(sender.userId().value(), chatRoomId);
         User latestSender = userRepository.findByUserId(sender.userId())
                 .orElseThrow(UserNotFoundException::new);
         LocalDateTime createdAt = LocalDateTime.now(appClock);

@@ -163,5 +163,12 @@ oauth:
   redirect:
     frontend-url: ${FRONTEND_URL}
 
+webrtc:
+  ice-servers:
+    - urls: ${WEBRTC_STUN_URL:stun:stun.l.google.com:19302}
+    - urls: ${WEBRTC_TURN_URL:turn:localhost:3478}
+      username: ${WEBRTC_TURN_USERNAME:}
+      credential: ${WEBRTC_TURN_CREDENTIAL:}
+
 server:
   forward-headers-strategy: framework

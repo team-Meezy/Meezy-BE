@@ -1,5 +1,6 @@
 package com.example.meezy.bc.collaboration.meeting.application.service;
 
+import com.example.meezy.bc.collaboration.meeting.application.port.out.IceServerQueryPort;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingAlreadyExistsException;
@@ -29,10 +30,11 @@ public class StartMeetingService {
     private final TeamRepository teamRepository;
     private final CurrentUserQuery currentUserQuery;
     private final UserRepository userRepository;
+    private final IceServerQueryPort iceServerQueryPort;
 
     @Transactional
     public MeetingResponse start(UUID teamId) {
-        Team team = findTeamOrThrow(teamId);
+        Team team = lockTeamOrThrow(teamId);
 
         team.validateLeaderPermission(currentUserQuery.currentUser().userId());
 
@@ -48,11 +50,13 @@ public class StartMeetingService {
         UUID hostUserId = currentUserQuery.currentUser().userId().value();
         Map<UUID, User> users = userRepository.findByUserId_ValueIn(List.of(hostUserId)).stream()
                 .collect(Collectors.toMap(user -> user.getUserId().value(), user -> user));
-        return MeetingResponse.from(meeting, users);
+
+        var iceServers = iceServerQueryPort.getIceServers();
+        return MeetingResponse.from(meeting, users, iceServers);
     }
 
-    private Team findTeamOrThrow(UUID teamId) {
-        return teamRepository.findByTeamId_Value(teamId)
+    private Team lockTeamOrThrow(UUID teamId) {
+        return teamRepository.findByTeamIdForUpdate(teamId)
                 .orElseThrow(TeamNotFoundException::new);
     }
 

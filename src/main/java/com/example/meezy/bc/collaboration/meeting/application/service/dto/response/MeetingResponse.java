@@ -17,10 +17,11 @@ public record MeetingResponse(
         UUID hostUserId,
         String status,
         LocalDateTime startedAt,
-        List<ParticipantResponse> participants
+        List<ParticipantResponse> participants,
+        List<IceServerResponse> iceServers
 ) {
 
-    public static MeetingResponse from(Meeting meeting, Map<UUID, User> users) {
+    public static MeetingResponse from(Meeting meeting, Map<UUID, User> users, List<IceServerResponse> iceServers) {
         return MeetingResponse.builder()
                 .meetingId(meeting.getMeetingId().value())
                 .teamId(meeting.getTeamId().value())
@@ -31,6 +32,7 @@ public record MeetingResponse(
                         .filter(MeetingParticipant::isActive)
                         .map(p -> ParticipantResponse.from(p, users.get(p.getUserId().value())))
                         .toList())
+                .iceServers(iceServers)
                 .build();
     }
 }

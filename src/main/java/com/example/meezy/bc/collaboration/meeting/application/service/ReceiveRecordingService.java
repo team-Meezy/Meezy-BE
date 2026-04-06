@@ -2,6 +2,10 @@ package com.example.meezy.bc.collaboration.meeting.application.service;
 
 import com.example.meezy.bc.collaboration.meeting.application.service.exception.EmptyRecordingException;
 import com.example.meezy.bc.collaboration.meeting.application.service.exception.InvalidRecordingFormatException;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
+import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
+import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,9 +21,15 @@ import java.util.UUID;
 public class ReceiveRecordingService {
 
     private final RecordingAsyncProcessor asyncProcessor;
+    private final CurrentUserQuery currentUserQuery;
+    private final TeamRepository teamRepository;
 
     public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
-        // ① 파일 형식 검증만 (DB 접근 없음)
+        // ① 팀 멤버 검증
+        UserId currentUserId = currentUserQuery.currentUser().userId();
+        validateTeamMembership(teamId, currentUserId);
+
+        // ② 파일 형식 검증만 (DB 접근 없음)
         validateRecording(recording);
 
         // ② Spring multipart 임시파일 경로 직접 사용 (복사 없음)
@@ -27,6 +37,12 @@ public class ReceiveRecordingService {
 
         // ③ 비동기: 팀 검증 + S3 업로드 + DB 저장
         asyncProcessor.process(teamId, meetingId, tempFile);
+    }
+
+    private void validateTeamMembership(UUID teamId, UserId userId) {
+        if (!teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)) {
+            throw new NotTeamMemberException();
+        }
     }
 
     private Path extractTempFilePath(MultipartFile recording) {

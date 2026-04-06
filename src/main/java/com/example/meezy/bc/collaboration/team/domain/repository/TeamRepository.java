@@ -3,7 +3,9 @@ package com.example.meezy.bc.collaboration.team.domain.repository;
 import com.example.meezy.bc.collaboration.team.domain.Team;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +28,8 @@ public interface TeamRepository extends JpaRepository<Team, TeamId> {
     @Query("SELECT COUNT(m) > 0 FROM Team t JOIN t.members m " +
             "WHERE t.teamId.value = :teamId AND m.userId = :userId")
     boolean existsMemberByTeamIdAndUserId(@Param("teamId") UUID teamId, @Param("userId") UserId userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Team t WHERE t.teamId.value = :teamId")
+    Optional<Team> findByTeamIdForUpdate(@Param("teamId") UUID teamId);
 }
