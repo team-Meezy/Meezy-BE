@@ -9,6 +9,7 @@ import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMember
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalRecipientNotInMeetingException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalRecipientRequiredException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalSenderMismatchException;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.SignalSenderNotInMeetingException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.collaboration.meeting.domain.type.MeetingStatus;
 import com.example.meezy.bc.collaboration.meeting.application.port.out.SignalRateLimitPort;
@@ -41,6 +42,7 @@ public class RelaySignalService {
         validateTeamMembership(teamId, currentUserId);
 
         Meeting meeting = findActiveMeetingOrThrow(teamId);
+        validateSenderIsParticipant(meeting, currentUserId.value());
         validateRecipientIsParticipant(meeting, message.toUserId());
 
         signalMessagePublisher.publish(teamId, message);
@@ -61,6 +63,12 @@ public class RelaySignalService {
     private Meeting findActiveMeetingOrThrow(UUID teamId) {
         return meetingRepository.findByTeamIdAndStatus(TeamId.of(teamId), MeetingStatus.ACTIVE)
                 .orElseThrow(MeetingNotFoundException::new);
+    }
+
+    private void validateSenderIsParticipant(Meeting meeting, UUID senderUserId) {
+        if (!meeting.getActiveParticipantUserIds().contains(senderUserId)) {
+            throw new SignalSenderNotInMeetingException();
+        }
     }
 
     private void validateRecipientIsParticipant(Meeting meeting, UUID toUserId) {
