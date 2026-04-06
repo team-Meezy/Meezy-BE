@@ -1,5 +1,6 @@
 package com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.out.redis;
 
+import com.example.meezy.bc.collaboration.chat_message.application.port.out.ChatMessageRateLimitPort;
 import com.example.meezy.bc.collaboration.chat_message.infrastructure.adapter.exception.ChatMessageRateLimitExceededException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -10,7 +11,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class ChatMessageRateLimiter {
+public class ChatMessageRateLimiter implements ChatMessageRateLimitPort {
 
     private static final long WINDOW_SECONDS = 1;
     private static final long MAX_MESSAGES_PER_WINDOW = 5;
