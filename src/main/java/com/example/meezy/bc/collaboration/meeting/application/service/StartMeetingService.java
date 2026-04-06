@@ -1,5 +1,6 @@
 package com.example.meezy.bc.collaboration.meeting.application.service;
 
+import com.example.meezy.bc.collaboration.meeting.application.port.out.IceServerQueryPort;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingAlreadyExistsException;
@@ -29,6 +30,7 @@ public class StartMeetingService {
     private final TeamRepository teamRepository;
     private final CurrentUserQuery currentUserQuery;
     private final UserRepository userRepository;
+    private final IceServerQueryPort iceServerQueryPort;
 
     @Transactional
     public MeetingResponse start(UUID teamId) {
@@ -36,7 +38,7 @@ public class StartMeetingService {
 
         team.validateLeaderPermission(currentUserQuery.currentUser().userId());
 
-        validateNoActiveMeeting(teamId);
+        validateNoActiveMeetingWithLock(teamId);
 
         Meeting meeting = Meeting.start(
                 team.getTeamId(),
@@ -48,7 +50,9 @@ public class StartMeetingService {
         UUID hostUserId = currentUserQuery.currentUser().userId().value();
         Map<UUID, User> users = userRepository.findByUserId_ValueIn(List.of(hostUserId)).stream()
                 .collect(Collectors.toMap(user -> user.getUserId().value(), user -> user));
-        return MeetingResponse.from(meeting, users);
+
+        var iceServers = iceServerQueryPort.getIceServers();
+        return MeetingResponse.from(meeting, users, iceServers);
     }
 
     private Team findTeamOrThrow(UUID teamId) {
@@ -56,9 +60,8 @@ public class StartMeetingService {
                 .orElseThrow(TeamNotFoundException::new);
     }
 
-    private void validateNoActiveMeeting(UUID teamId) {
-        if (meetingRepository.existsByTeamIdAndStatus(TeamId.of(teamId), MeetingStatus.ACTIVE)) {
-            throw new MeetingAlreadyExistsException();
-        }
+    private void validateNoActiveMeetingWithLock(UUID teamId) {
+        meetingRepository.findByTeamIdAndStatusForUpdate(TeamId.of(teamId), MeetingStatus.ACTIVE)
+                .ifPresent(existing -> { throw new MeetingAlreadyExistsException(); });
     }
 }

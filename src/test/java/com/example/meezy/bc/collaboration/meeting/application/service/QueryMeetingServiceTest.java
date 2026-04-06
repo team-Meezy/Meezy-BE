@@ -2,15 +2,14 @@ package com.example.meezy.bc.collaboration.meeting.application.service;
 
 import com.example.meezy.bc.sharedkernel.user.AuthenticatedUser;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.collaboration.meeting.application.port.out.IceServerQueryPort;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
-import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingNotFoundException;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.collaboration.meeting.domain.type.MeetingStatus;
 import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
-import com.example.meezy.bc.collaboration.meeting.application.port.out.IceServerQueryPort;
 import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,17 +31,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("JoinMeetingService 테스트")
-class JoinMeetingServiceTest {
+@DisplayName("QueryMeetingService 테스트")
+class QueryMeetingServiceTest {
 
     @Mock
     private MeetingRepository meetingRepository;
-
-    @Mock
-    private CurrentUserQuery currentUserQuery;
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private UserRepository userRepository;
@@ -54,33 +46,33 @@ class JoinMeetingServiceTest {
     @Mock
     private TeamRepository teamRepository;
 
+    @Mock
+    private CurrentUserQuery currentUserQuery;
+
     @InjectMocks
-    private JoinMeetingService joinMeetingService;
+    private QueryMeetingService queryMeetingService;
 
     private UUID teamIdValue;
-    private TeamId teamId;
-    private UserId hostUserId;
-    private UserId newUserId;
+    private UserId userId;
     private AuthenticatedUser authenticatedUser;
     private Meeting meeting;
 
     @BeforeEach
     void setUp() {
         teamIdValue = UUID.randomUUID();
-        teamId = TeamId.of(teamIdValue);
-        hostUserId = UserId.newId();
-        newUserId = UserId.newId();
+        TeamId teamId = TeamId.of(teamIdValue);
+        userId = UserId.newId();
         authenticatedUser = AuthenticatedUser.builder()
-                .userId(newUserId)
-                .accountId("newUser")
-                .name("New User")
+                .userId(userId)
+                .accountId("user")
+                .name("User")
                 .build();
-        meeting = Meeting.start(teamId, hostUserId);
+        meeting = Meeting.start(teamId, userId);
     }
 
     @Test
-    @DisplayName("진행 중인 회의에 참가할 수 있다")
-    void join_adds_participant() {
+    @DisplayName("진행 중인 회의를 조회할 수 있다")
+    void findActiveMeeting_returns_meeting() {
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
         given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
                 .willReturn(true);
@@ -89,33 +81,34 @@ class JoinMeetingServiceTest {
         given(userRepository.findByUserId_ValueIn(any())).willReturn(List.of());
         given(iceServerQueryPort.getIceServers()).willReturn(List.of());
 
-        MeetingResponse response = joinMeetingService.join(teamIdValue);
+        Optional<MeetingResponse> result = queryMeetingService.findActiveMeeting(teamIdValue);
 
-        assertThat(response).isNotNull();
-        assertThat(meeting.getActiveParticipantCount()).isEqualTo(2);
+        assertThat(result).isPresent();
     }
 
     @Test
-    @DisplayName("진행 중인 회의가 없으면 참가할 수 없다")
-    void join_throws_when_no_active_meeting() {
+    @DisplayName("진행 중인 회의가 없으면 빈 Optional을 반환한다")
+    void findActiveMeeting_returns_empty_when_no_active_meeting() {
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
         given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
                 .willReturn(true);
         given(meetingRepository.findByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
                 .willReturn(Optional.empty());
+        given(iceServerQueryPort.getIceServers()).willReturn(List.of());
 
-        assertThatThrownBy(() -> joinMeetingService.join(teamIdValue))
-                .isInstanceOf(MeetingNotFoundException.class);
+        Optional<MeetingResponse> result = queryMeetingService.findActiveMeeting(teamIdValue);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    @DisplayName("팀 멤버가 아니면 회의에 참가할 수 없다")
-    void join_throws_when_not_team_member() {
+    @DisplayName("팀 멤버가 아니면 회의 조회 시 예외가 발생한다")
+    void findActiveMeeting_throws_when_not_team_member() {
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
         given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
                 .willReturn(false);
 
-        assertThatThrownBy(() -> joinMeetingService.join(teamIdValue))
+        assertThatThrownBy(() -> queryMeetingService.findActiveMeeting(teamIdValue))
                 .isInstanceOf(NotTeamMemberException.class);
     }
 }

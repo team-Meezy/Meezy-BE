@@ -3,6 +3,7 @@ package com.example.meezy.bc.collaboration.meeting.application.service;
 import com.example.meezy.bc.sharedkernel.user.AuthenticatedUser;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
+import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingAlreadyExistsException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.collaboration.meeting.domain.type.MeetingStatus;
@@ -10,6 +11,8 @@ import com.example.meezy.bc.collaboration.team.application.service.exception.Tea
 import com.example.meezy.bc.collaboration.team.domain.Team;
 import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
+import com.example.meezy.bc.collaboration.meeting.application.port.out.IceServerQueryPort;
+import com.example.meezy.bc.user.user.domain.repository.UserRepository;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,12 +22,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -40,6 +45,12 @@ class StartMeetingServiceTest {
 
     @Mock
     private CurrentUserQuery currentUserQuery;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private IceServerQueryPort iceServerQueryPort;
 
     @Mock
     private Team team;
@@ -70,7 +81,10 @@ class StartMeetingServiceTest {
         given(teamRepository.findByTeamId_Value(teamIdValue)).willReturn(Optional.of(team));
         given(team.getTeamId()).willReturn(teamId);
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
-        given(meetingRepository.existsByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE))).willReturn(false);
+        given(meetingRepository.findByTeamIdAndStatusForUpdate(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
+                .willReturn(Optional.empty());
+        given(userRepository.findByUserId_ValueIn(any())).willReturn(List.of());
+        given(iceServerQueryPort.getIceServers()).willReturn(List.of());
 
         MeetingResponse response = startMeetingService.start(teamIdValue);
 
@@ -92,9 +106,11 @@ class StartMeetingServiceTest {
     @Test
     @DisplayName("이미 진행 중인 회의가 있으면 새 회의를 시작할 수 없다")
     void start_throws_when_meeting_already_exists() {
+        Meeting existingMeeting = Meeting.start(teamId, userId);
         given(teamRepository.findByTeamId_Value(teamIdValue)).willReturn(Optional.of(team));
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
-        given(meetingRepository.existsByTeamIdAndStatus(any(TeamId.class), eq(MeetingStatus.ACTIVE))).willReturn(true);
+        given(meetingRepository.findByTeamIdAndStatusForUpdate(any(TeamId.class), eq(MeetingStatus.ACTIVE)))
+                .willReturn(Optional.of(existingMeeting));
 
         assertThatThrownBy(() -> startMeetingService.start(teamIdValue))
                 .isInstanceOf(MeetingAlreadyExistsException.class);
