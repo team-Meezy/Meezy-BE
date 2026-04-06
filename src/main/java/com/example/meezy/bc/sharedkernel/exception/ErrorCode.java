@@ -59,6 +59,9 @@ public enum ErrorCode {
     PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND, "회의 참가자를 찾을 수 없습니다."),
     MEETING_NOT_BELONGS_TO_TEAM(HttpStatus.BAD_REQUEST, "해당 회의는 이 팀에 속하지 않습니다."),
     SIGNAL_SENDER_MISMATCH(HttpStatus.FORBIDDEN, "시그널 발신자가 일치하지 않습니다."),
+    SIGNAL_RECIPIENT_NOT_IN_MEETING(HttpStatus.FORBIDDEN, "시그널 수신자가 회의에 참가 중이 아닙니다."),
+    SIGNAL_RECIPIENT_REQUIRED(HttpStatus.BAD_REQUEST, "시그널 수신자(toUserId)가 필요합니다."),
+    SIGNAL_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "시그널을 너무 빠르게 전송하고 있습니다. 잠시 후 다시 시도해주세요."),
     NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "해당 팀의 멤버가 아닙니다."),
 
     EMPTY_AUDIO_FILE(HttpStatus.BAD_REQUEST, "오디오 파일이 비어있습니다."),
