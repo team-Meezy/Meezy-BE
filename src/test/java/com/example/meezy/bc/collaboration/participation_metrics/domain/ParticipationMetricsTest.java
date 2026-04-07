@@ -137,7 +137,7 @@ class ParticipationMetricsTest {
 
             // user1: voice(10/10)*0.5 + connection(3600/3600)*0.49 + chat(0/0)*0.01 = 0.99
             // user2: voice(5/10)*0.5 + connection(3600/3600)*0.49 + chat(0/0)*0.01 = 0.74
-            assertThat(user1Rate.getValue()).isGreaterThan(user2Rate.getValue());
+            assertThat(user1Rate.value()).isGreaterThan(user2Rate.value());
         }
 
         @Test
@@ -157,7 +157,7 @@ class ParticipationMetricsTest {
 
             ParticipationRate rate = metrics.getParticipationRateByUserId(user1Id);
 
-            assertThat(rate.getValue()).isZero();
+            assertThat(rate.value()).isZero();
         }
 
         @Test
@@ -177,7 +177,7 @@ class ParticipationMetricsTest {
 
             ParticipationRate rate = metrics.getParticipationRateByUserId(UserId.newId());
 
-            assertThat(rate.getValue()).isZero();
+            assertThat(rate.value()).isZero();
         }
     }
 }

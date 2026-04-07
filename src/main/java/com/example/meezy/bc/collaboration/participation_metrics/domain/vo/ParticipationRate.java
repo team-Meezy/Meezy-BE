@@ -2,23 +2,16 @@ package com.example.meezy.bc.collaboration.participation_metrics.domain.vo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
 @Embeddable
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ParticipationRate {
+public record ParticipationRate(
+        @Column(name = "participation_rate")
+        double value
+) {
 
     private static final double VOICE_WEIGHT = 0.5;
     private static final double CONNECTION_WEIGHT = 0.49;
     private static final double CHAT_WEIGHT = 0.01;
-
-    @Column(name = "participation_rate")
-    private double value;
 
     public static ParticipationRate calculate(
             int voiceCount,
