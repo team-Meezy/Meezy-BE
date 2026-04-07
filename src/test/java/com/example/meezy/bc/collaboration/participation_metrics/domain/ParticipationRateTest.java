@@ -24,7 +24,7 @@ class ParticipationRateTest {
                     5, 5        // chat: 100%
             );
 
-            assertThat(rate.getValue()).isCloseTo(1.0, within(0.001));
+            assertThat(rate.value()).isCloseTo(1.0, within(0.001));
         }
 
         @Test
@@ -38,7 +38,7 @@ class ParticipationRateTest {
                     0, 10
             );
 
-            assertThat(rate.getValue()).isCloseTo(0.74, within(0.001));
+            assertThat(rate.value()).isCloseTo(0.74, within(0.001));
         }
 
         @Test
@@ -50,7 +50,7 @@ class ParticipationRateTest {
                     0, 0    // chat: max가 0이면 0%
             );
 
-            assertThat(rate.getValue()).isZero();
+            assertThat(rate.value()).isZero();
         }
 
         @Test
@@ -63,7 +63,7 @@ class ParticipationRateTest {
                     100, 10
             );
 
-            assertThat(rate.getValue()).isLessThanOrEqualTo(1.0);
+            assertThat(rate.value()).isLessThanOrEqualTo(1.0);
         }
     }
 
@@ -76,7 +76,7 @@ class ParticipationRateTest {
         void zero_returns_rate_with_zero_value() {
             ParticipationRate rate = ParticipationRate.zero();
 
-            assertThat(rate.getValue()).isZero();
+            assertThat(rate.value()).isZero();
         }
     }
 }

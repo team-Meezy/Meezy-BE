@@ -93,8 +93,16 @@ class ParticipationMetricsGeneratorTest {
     }
 
     @Test
-    @DisplayName("생성 후 Redis 데이터를 정리한다")
-    void generate_clears_redis_data_after_save() {
+    @DisplayName("generate 후 clearRedisData 호출 시 Redis 데이터를 정리한다")
+    void clearRedisData_clears_redis_data() {
+        participationMetricsGenerator.clearRedisData(meetingIdValue);
+
+        verify(participationCounterPort).clearMeetingData(meetingIdValue);
+    }
+
+    @Test
+    @DisplayName("generate 내에서는 Redis 데이터를 정리하지 않는다")
+    void generate_does_not_clear_redis_data() {
         given(participationMetricsRepository.existsByMeetingId(any(MeetingId.class))).willReturn(false);
         given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(meeting));
         given(teamRepository.findByTeamId_Value(meeting.getTeamId().value())).willReturn(Optional.of(team));
@@ -103,7 +111,7 @@ class ParticipationMetricsGeneratorTest {
 
         participationMetricsGenerator.generate(meetingIdValue);
 
-        verify(participationCounterPort).clearMeetingData(meetingIdValue);
+        verify(participationCounterPort, never()).clearMeetingData(any());
     }
 
     @Test

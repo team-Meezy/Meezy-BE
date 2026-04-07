@@ -18,7 +18,7 @@ public record ParticipantMetricResponse(
                 metric.getVoiceCount(),
                 metric.getChatCount(),
                 metric.getConnectionSeconds(),
-                metric.getParticipationRate().getValue(),
+                metric.getParticipationRate().value(),
                 metric.hasParticipated()
         );
     }

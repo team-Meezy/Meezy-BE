@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reissue").permitAll()
                         .requestMatchers(HttpMethod.POST, "/email/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtTokenFilter(tokenResolver, tokenService), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new GlobalExceptionFilter(objectMapper), JwtTokenFilter.class)

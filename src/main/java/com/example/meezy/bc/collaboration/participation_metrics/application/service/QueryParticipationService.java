@@ -5,8 +5,10 @@ import com.example.meezy.bc.collaboration.participation_metrics.application.serv
 import com.example.meezy.bc.collaboration.participation_metrics.application.service.dto.response.ParticipationResponse;
 import com.example.meezy.bc.collaboration.participation_metrics.application.service.exception.ParticipationMetricsNotFoundException;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.ParticipationMetrics;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.repository.ParticipationMetricsRepository;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.vo.ParticipationRate;
+import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
@@ -23,11 +25,13 @@ import java.util.UUID;
 public class QueryParticipationService {
 
     private final ParticipationMetricsRepository participationMetricsRepository;
+    private final TeamRepository teamRepository;
     private final CurrentUserQuery currentUserQuery;
 
     public ParticipationResponse getParticipation(UUID teamId, UUID meetingId) {
 
         UserId userId = currentUserQuery.currentUser().userId();
+        validateTeamMembership(teamId, userId);
 
         ParticipationMetrics metrics = participationMetricsRepository
                 .findByMeetingIdWithParticipants(MeetingId.of(meetingId))
@@ -43,13 +47,16 @@ public class QueryParticipationService {
         return ParticipationResponse.of(
                 meetingId,
                 userId.value(),
-                currentRate.getValue(),
+                currentRate.value(),
                 averageRate,
                 recentRates.size()
         );
     }
 
     public MeetingParticipationResponse getMeetingParticipation(UUID teamId, UUID meetingId) {
+        UserId userId = currentUserQuery.currentUser().userId();
+        validateTeamMembership(teamId, userId);
+
         ParticipationMetrics metrics = participationMetricsRepository
                 .findByMeetingIdWithParticipants(MeetingId.of(meetingId))
                 .orElseThrow(ParticipationMetricsNotFoundException::new);
@@ -66,6 +73,12 @@ public class QueryParticipationService {
                 .findRecentRatesByTeamIdAndUserId(TeamId.of(teamId), UserId.of(userId));
 
         return calculateAverage(recentRates);
+    }
+
+    private void validateTeamMembership(UUID teamId, UserId userId) {
+        if (!teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)) {
+            throw new NotTeamMemberException();
+        }
     }
 
     private double calculateAverage(List<Double> rates) {
