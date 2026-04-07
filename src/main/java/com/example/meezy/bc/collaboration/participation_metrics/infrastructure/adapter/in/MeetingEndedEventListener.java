@@ -21,6 +21,7 @@ public class MeetingEndedEventListener {
     public void handleMeetingEnded(MeetingEndedEvent event) {
         try {
             participationMetricsGenerator.generate(event.meetingId());
+            participationMetricsGenerator.clearRedisData(event.meetingId());
             log.info("참여 지표 생성 완료: meetingId={}", event.meetingId());
         } catch (Exception e) {
             log.error("참여 지표 생성 실패: meetingId={}", event.meetingId(), e);

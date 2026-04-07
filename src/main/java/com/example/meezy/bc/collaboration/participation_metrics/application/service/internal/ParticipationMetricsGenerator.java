@@ -67,9 +67,12 @@ public class ParticipationMetricsGenerator {
         );
 
         participationMetricsRepository.save(metrics);
-        participationCounterPort.clearMeetingData(meetingId);
 
         log.info("참여 지표 생성 완료: meetingId={}, participantCount={}", meetingId, allMemberIds.size());
+    }
+
+    public void clearRedisData(UUID meetingId) {
+        participationCounterPort.clearMeetingData(meetingId);
     }
 
     private Map<UUID, Long> calculateConnectionDurations(Meeting meeting) {
