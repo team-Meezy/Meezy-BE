@@ -69,9 +69,12 @@ class RecordParticipationServiceTest {
     class RecordVoiceTest {
 
         @Test
-        @DisplayName("활성 참가자는 음성 참여를 기록할 수 있다")
-        void recordVoice_succeeds_for_active_participant() {
+        @DisplayName("캐시 히트 - 활성 참가자는 음성 참여를 기록할 수 있다")
+        void recordVoice_succeeds_for_active_participant_with_cache() {
             mockCurrentUser();
+            Meeting meeting = createActiveMeetingWithParticipant(userIdValue);
+            given(meetingRepository.findByMeetingId_Value(meetingIdValue))
+                    .willReturn(Optional.of(meeting));
             given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
                     .willReturn(Optional.of(Set.of(userIdValue)));
 
@@ -81,9 +84,12 @@ class RecordParticipationServiceTest {
         }
 
         @Test
-        @DisplayName("회의 참가자가 아니면 예외가 발생한다")
-        void recordVoice_throws_when_not_participant() {
+        @DisplayName("캐시 히트 - 회의 참가자가 아니면 예외가 발생한다")
+        void recordVoice_throws_when_not_participant_with_cache() {
             mockCurrentUser();
+            Meeting meeting = createActiveMeetingWithParticipant(userIdValue);
+            given(meetingRepository.findByMeetingId_Value(meetingIdValue))
+                    .willReturn(Optional.of(meeting));
             UUID otherUserId = UUID.randomUUID();
             given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
                     .willReturn(Optional.of(Set.of(otherUserId)));
@@ -95,16 +101,15 @@ class RecordParticipationServiceTest {
         }
 
         @Test
-        @DisplayName("비활성 회의에는 무시된다")
-        void recordVoice_ignores_inactive_meeting() {
+        @DisplayName("비활성 회의에는 무시되고 캐시가 제거된다")
+        void recordVoice_ignores_inactive_meeting_and_evicts_cache() {
             mockCurrentUser();
-            given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
-                    .willReturn(Optional.empty());
             given(meetingRepository.findByMeetingId_Value(meetingIdValue))
                     .willReturn(Optional.empty());
 
             recordParticipationService.recordVoice(meetingIdValue);
 
+            verify(participationCounterPort).evictCachedParticipantIds(meetingIdValue);
             verify(participationCounterPort, never()).incrementVoiceCount(any(), any());
         }
 
@@ -112,12 +117,11 @@ class RecordParticipationServiceTest {
         @DisplayName("캐시 미스 시 DB에서 조회하여 참가자를 검증한다")
         void recordVoice_loads_from_db_on_cache_miss() {
             mockCurrentUser();
-            given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
-                    .willReturn(Optional.empty());
-
             Meeting meeting = createActiveMeetingWithParticipant(userIdValue);
             given(meetingRepository.findByMeetingId_Value(meetingIdValue))
                     .willReturn(Optional.of(meeting));
+            given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
+                    .willReturn(Optional.empty());
 
             recordParticipationService.recordVoice(meetingIdValue);
 
@@ -129,13 +133,12 @@ class RecordParticipationServiceTest {
         @DisplayName("캐시 미스 시 비참가자는 예외가 발생한다")
         void recordVoice_throws_on_cache_miss_when_not_participant() {
             mockCurrentUser();
-            given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
-                    .willReturn(Optional.empty());
-
             UUID otherUserId = UUID.randomUUID();
             Meeting meeting = createActiveMeetingWithParticipant(otherUserId);
             given(meetingRepository.findByMeetingId_Value(meetingIdValue))
                     .willReturn(Optional.of(meeting));
+            given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
+                    .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> recordParticipationService.recordVoice(meetingIdValue))
                     .isInstanceOf(ParticipationSenderNotInMeetingException.class);
@@ -150,6 +153,9 @@ class RecordParticipationServiceTest {
         @DisplayName("활성 참가자는 채팅 참여를 기록할 수 있다")
         void recordChat_succeeds_for_active_participant() {
             mockCurrentUser();
+            Meeting meeting = createActiveMeetingWithParticipant(userIdValue);
+            given(meetingRepository.findByMeetingId_Value(meetingIdValue))
+                    .willReturn(Optional.of(meeting));
             given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
                     .willReturn(Optional.of(Set.of(userIdValue)));
 
@@ -162,6 +168,9 @@ class RecordParticipationServiceTest {
         @DisplayName("회의 참가자가 아니면 예외가 발생한다")
         void recordChat_throws_when_not_participant() {
             mockCurrentUser();
+            Meeting meeting = createActiveMeetingWithParticipant(userIdValue);
+            given(meetingRepository.findByMeetingId_Value(meetingIdValue))
+                    .willReturn(Optional.of(meeting));
             UUID otherUserId = UUID.randomUUID();
             given(participationCounterPort.getCachedParticipantIds(meetingIdValue))
                     .willReturn(Optional.of(Set.of(otherUserId)));

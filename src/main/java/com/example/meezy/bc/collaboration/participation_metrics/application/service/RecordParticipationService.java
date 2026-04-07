@@ -42,20 +42,21 @@ public class RecordParticipationService {
      * @throws ParticipationSenderNotInMeetingException if meeting is active but user is not a participant
      */
     private boolean validateActiveParticipant(UUID meetingId, UUID userId) {
+        Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
+                .filter(Meeting::isActive)
+                .orElse(null);
+
+        if (meeting == null) {
+            participationCounterPort.evictCachedParticipantIds(meetingId);
+            return false;
+        }
+
         Optional<Set<UUID>> cached = participationCounterPort.getCachedParticipantIds(meetingId);
         if (cached.isPresent()) {
             if (!cached.get().contains(userId)) {
                 throw new ParticipationSenderNotInMeetingException();
             }
             return true;
-        }
-
-        Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
-                .filter(Meeting::isActive)
-                .orElse(null);
-
-        if (meeting == null) {
-            return false;
         }
 
         List<UUID> activeParticipantIds = meeting.getActiveParticipantUserIds();

@@ -24,4 +24,6 @@ public interface ParticipationCounterPort {
     Optional<Set<UUID>> getCachedParticipantIds(UUID meetingId);
 
     void cacheParticipantIds(UUID meetingId, Set<UUID> participantIds);
+
+    void evictCachedParticipantIds(UUID meetingId);
 }

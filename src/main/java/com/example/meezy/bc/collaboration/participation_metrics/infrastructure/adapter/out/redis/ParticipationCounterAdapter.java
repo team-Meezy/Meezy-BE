@@ -21,6 +21,7 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
     private static final Duration PARTICIPANTS_CACHE_TTL = Duration.ofSeconds(30);
 
     private static final DefaultRedisScript<Long> HASH_INCREMENT_SCRIPT;
+    private static final DefaultRedisScript<Long> SET_ADD_WITH_EXPIRE_SCRIPT;
 
     static {
         HASH_INCREMENT_SCRIPT = new DefaultRedisScript<>();
@@ -30,6 +31,14 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
                 "return count"
         );
         HASH_INCREMENT_SCRIPT.setResultType(Long.class);
+
+        SET_ADD_WITH_EXPIRE_SCRIPT = new DefaultRedisScript<>();
+        SET_ADD_WITH_EXPIRE_SCRIPT.setScriptText(
+                "for i = 2, #ARGV do redis.call('SADD', KEYS[1], ARGV[i]) end " +
+                "redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
+                "return 1"
+        );
+        SET_ADD_WITH_EXPIRE_SCRIPT.setResultType(Long.class);
     }
 
     private final StringRedisTemplate redisTemplate;
@@ -110,11 +119,20 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
             return;
         }
         String key = buildParticipantsKey(meetingId);
-        String[] ids = participantIds.stream()
-                .map(UUID::toString)
-                .toArray(String[]::new);
-        redisTemplate.opsForSet().add(key, ids);
-        redisTemplate.expire(key, PARTICIPANTS_CACHE_TTL);
+        List<String> args = new ArrayList<>();
+        args.add(String.valueOf(PARTICIPANTS_CACHE_TTL.getSeconds()));
+        participantIds.stream().map(UUID::toString).forEach(args::add);
+        redisTemplate.execute(
+                SET_ADD_WITH_EXPIRE_SCRIPT,
+                List.of(key),
+                (Object[]) args.toArray(String[]::new)
+        );
+    }
+
+    @Override
+    public void evictCachedParticipantIds(UUID meetingId) {
+        String key = buildParticipantsKey(meetingId);
+        redisTemplate.delete(key);
     }
 
     private Map<UUID, Integer> getAllCounts(String key) {
