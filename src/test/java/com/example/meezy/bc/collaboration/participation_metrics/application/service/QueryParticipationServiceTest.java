@@ -5,7 +5,9 @@ import com.example.meezy.bc.collaboration.participation_metrics.application.serv
 import com.example.meezy.bc.collaboration.participation_metrics.application.service.dto.response.ParticipationResponse;
 import com.example.meezy.bc.collaboration.participation_metrics.application.service.exception.ParticipationMetricsNotFoundException;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.ParticipationMetrics;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
 import com.example.meezy.bc.collaboration.participation_metrics.domain.repository.ParticipationMetricsRepository;
+import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
 import com.example.meezy.bc.sharedkernel.user.AuthenticatedUser;
 import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
@@ -24,6 +26,7 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,9 @@ class QueryParticipationServiceTest {
 
     @Mock
     private ParticipationMetricsRepository participationMetricsRepository;
+
+    @Mock
+    private TeamRepository teamRepository;
 
     @Mock
     private CurrentUserQuery currentUserQuery;
@@ -85,6 +91,8 @@ class QueryParticipationServiceTest {
         void getParticipation_returns_current_and_average_rate() {
             given(currentUserQuery.currentUser())
                     .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                    .willReturn(true);
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.of(participationMetrics));
             given(participationMetricsRepository.findRecentRatesByTeamIdAndUserId(any(TeamId.class), any(UserId.class)))
@@ -101,10 +109,25 @@ class QueryParticipationServiceTest {
         }
 
         @Test
+        @DisplayName("팀 멤버가 아니면 예외가 발생한다")
+        void getParticipation_throws_when_not_team_member() {
+            given(currentUserQuery.currentUser())
+                    .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                    .willReturn(false);
+
+            assertThatThrownBy(() -> queryParticipationService.getParticipation(
+                    teamIdValue, meetingIdValue))
+                    .isInstanceOf(NotTeamMemberException.class);
+        }
+
+        @Test
         @DisplayName("참여 지표가 없으면 예외가 발생한다")
         void getParticipation_throws_when_not_found() {
             given(currentUserQuery.currentUser())
                     .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                    .willReturn(true);
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.empty());
 
@@ -121,6 +144,10 @@ class QueryParticipationServiceTest {
         @Test
         @DisplayName("회의의 모든 참가자 지표를 조회할 수 있다")
         void getMeetingParticipation_returns_all_participant_metrics() {
+            given(currentUserQuery.currentUser())
+                    .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                    .willReturn(true);
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.of(participationMetrics));
 
@@ -134,6 +161,10 @@ class QueryParticipationServiceTest {
         @Test
         @DisplayName("참여 지표가 없으면 예외가 발생한다")
         void getMeetingParticipation_throws_when_not_found() {
+            given(currentUserQuery.currentUser())
+                    .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class)))
+                    .willReturn(true);
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.empty());
 
@@ -145,6 +176,10 @@ class QueryParticipationServiceTest {
         @DisplayName("회의가 해당 팀 소속이 아니면 예외가 발생한다")
         void getMeetingParticipation_throws_when_team_mismatch() {
             UUID otherTeamIdValue = UUID.randomUUID();
+            given(currentUserQuery.currentUser())
+                    .willReturn(AuthenticatedUser.builder().userId(userId).build());
+            given(teamRepository.existsMemberByTeamIdAndUserId(eq(otherTeamIdValue), any(UserId.class)))
+                    .willReturn(true);
             given(participationMetricsRepository.findByMeetingIdWithParticipants(any(MeetingId.class)))
                     .willReturn(Optional.of(participationMetrics));
 
