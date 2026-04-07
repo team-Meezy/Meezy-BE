@@ -3,10 +3,12 @@ package com.example.meezy.bc.collaboration.participation_metrics.infrastructure.
 import com.example.meezy.bc.collaboration.participation_metrics.application.port.out.ParticipationCounterPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -14,22 +16,44 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
 
     private static final String VOICE_KEY_PREFIX = "meeting:%s:voice";
     private static final String CHAT_KEY_PREFIX = "meeting:%s:chat";
+    private static final String PARTICIPANTS_KEY_PREFIX = "meeting:%s:participants";
     private static final Duration KEY_TTL = Duration.ofHours(24);
+    private static final Duration PARTICIPANTS_CACHE_TTL = Duration.ofSeconds(30);
+
+    private static final DefaultRedisScript<Long> HASH_INCREMENT_SCRIPT;
+
+    static {
+        HASH_INCREMENT_SCRIPT = new DefaultRedisScript<>();
+        HASH_INCREMENT_SCRIPT.setScriptText(
+                "local count = redis.call('HINCRBY', KEYS[1], ARGV[1], 1) " +
+                "if redis.call('TTL', KEYS[1]) == -1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end " +
+                "return count"
+        );
+        HASH_INCREMENT_SCRIPT.setResultType(Long.class);
+    }
 
     private final StringRedisTemplate redisTemplate;
 
     @Override
     public void incrementVoiceCount(UUID meetingId, UUID userId) {
         String key = buildVoiceKey(meetingId);
-        redisTemplate.opsForHash().increment(key, userId.toString(), 1);
-        redisTemplate.expire(key, KEY_TTL);
+        redisTemplate.execute(
+                HASH_INCREMENT_SCRIPT,
+                List.of(key),
+                userId.toString(),
+                String.valueOf(KEY_TTL.getSeconds())
+        );
     }
 
     @Override
     public void incrementChatCount(UUID meetingId, UUID userId) {
         String key = buildChatKey(meetingId);
-        redisTemplate.opsForHash().increment(key, userId.toString(), 1);
-        redisTemplate.expire(key, KEY_TTL);
+        redisTemplate.execute(
+                HASH_INCREMENT_SCRIPT,
+                List.of(key),
+                userId.toString(),
+                String.valueOf(KEY_TTL.getSeconds())
+        );
     }
 
     @Override
@@ -62,7 +86,35 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
     public void clearMeetingData(UUID meetingId) {
         String voiceKey = buildVoiceKey(meetingId);
         String chatKey = buildChatKey(meetingId);
-        redisTemplate.delete(List.of(voiceKey, chatKey));
+        String participantsKey = buildParticipantsKey(meetingId);
+        redisTemplate.delete(List.of(voiceKey, chatKey, participantsKey));
+    }
+
+    @Override
+    public Optional<Set<UUID>> getCachedParticipantIds(UUID meetingId) {
+        String key = buildParticipantsKey(meetingId);
+        Set<String> members = redisTemplate.opsForSet().members(key);
+        if (members == null || members.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                members.stream()
+                        .map(UUID::fromString)
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    @Override
+    public void cacheParticipantIds(UUID meetingId, Set<UUID> participantIds) {
+        if (participantIds.isEmpty()) {
+            return;
+        }
+        String key = buildParticipantsKey(meetingId);
+        String[] ids = participantIds.stream()
+                .map(UUID::toString)
+                .toArray(String[]::new);
+        redisTemplate.opsForSet().add(key, ids);
+        redisTemplate.expire(key, PARTICIPANTS_CACHE_TTL);
     }
 
     private Map<UUID, Integer> getAllCounts(String key) {
@@ -91,5 +143,9 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
 
     private String buildChatKey(UUID meetingId) {
         return String.format(CHAT_KEY_PREFIX, meetingId);
+    }
+
+    private String buildParticipantsKey(UUID meetingId) {
+        return String.format(PARTICIPANTS_KEY_PREFIX, meetingId);
     }
 }
