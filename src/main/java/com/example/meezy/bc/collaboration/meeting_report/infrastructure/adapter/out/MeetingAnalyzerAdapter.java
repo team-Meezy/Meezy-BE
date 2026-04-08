@@ -7,7 +7,7 @@ import com.example.meezy.bc.collaboration.meeting_report.infrastructure.ai.Speec
 import com.example.meezy.bc.collaboration.meeting_report.infrastructure.ai.SummaryGenerator;
 import com.example.meezy.bc.sharedkernel.file.AudioStoragePort;
 import lombok.RequiredArgsConstructor;
-3import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
