@@ -21,12 +21,14 @@ public class RecordingAsyncProcessor {
 
     @Async
     public void process(UUID teamId, UUID meetingId, Path tempFile) {
+        log.info("녹음 비동기 처리 시작: teamId={}, meetingId={}, tempFile={}", teamId, meetingId, tempFile);
         try {
             // ① 팀/회의 검증 (비동기 스레드에서)
             transactionHandler.validateMeetingOwnership(teamId, meetingId);
 
             // ② S3 업로드
             String s3Key = audioStoragePort.uploadAudioFromPath(tempFile);
+            log.info("녹음 S3 업로드 완료: meetingId={}, s3Key={}", meetingId, s3Key);
 
             try {
                 // ③ DB 저장 + 이벤트 발행

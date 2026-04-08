@@ -23,6 +23,7 @@ public class RecordingEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRecordingReceived(RecordingReceivedEvent event) {
+        log.info("회의 리포트 생성 시작: meetingId={}, s3Key={}", event.meetingId(), event.s3Key());
         try {
             String transcript = meetingAnalyzerPort.transcribe(event.s3Key());
 

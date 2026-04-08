@@ -25,6 +25,14 @@ public class ReceiveRecordingService {
     private final TeamRepository teamRepository;
 
     public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
+        log.info(
+                "녹음 업로드 요청 수신: teamId={}, meetingId={}, filename={}, size={}, contentType={}",
+                teamId,
+                meetingId,
+                recording != null ? recording.getOriginalFilename() : null,
+                recording != null ? recording.getSize() : null,
+                recording != null ? recording.getContentType() : null
+        );
         // ① 팀 멤버 검증
         UserId currentUserId = currentUserQuery.currentUser().userId();
         validateTeamMembership(teamId, currentUserId);
@@ -37,6 +45,7 @@ public class ReceiveRecordingService {
 
         // ③ 비동기: 팀 검증 + S3 업로드 + DB 저장
         asyncProcessor.process(teamId, meetingId, tempFile);
+        log.info("녹음 업로드 비동기 처리 위임 완료: teamId={}, meetingId={}", teamId, meetingId);
     }
 
     private void validateTeamMembership(UUID teamId, UserId userId) {

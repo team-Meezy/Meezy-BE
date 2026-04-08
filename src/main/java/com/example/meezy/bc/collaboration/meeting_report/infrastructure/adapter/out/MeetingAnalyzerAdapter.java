@@ -7,11 +7,13 @@ import com.example.meezy.bc.collaboration.meeting_report.infrastructure.ai.Speec
 import com.example.meezy.bc.collaboration.meeting_report.infrastructure.ai.SummaryGenerator;
 import com.example.meezy.bc.sharedkernel.file.AudioStoragePort;
 import lombok.RequiredArgsConstructor;
+3import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MeetingAnalyzerAdapter implements MeetingAnalyzerPort {
@@ -26,10 +28,35 @@ public class MeetingAnalyzerAdapter implements MeetingAnalyzerPort {
     public String transcribe(String s3Key) {
         byte[] audioData = audioStoragePort.downloadAudio(s3Key);
         List<byte[]> chunks = mp3ChunkSplitter.split(audioData);
+        log.info(
+                "회의 음성 변환 시작: s3Key={}, audioBytes={}, chunkCount={}",
+                s3Key,
+                audioData.length,
+                chunks.size()
+        );
 
-        return chunks.stream()
-                .map(speechToTextClient::transcribe)
-                .collect(Collectors.joining(" "));
+        List<String> transcripts = new ArrayList<>(chunks.size());
+
+        for (int i = 0; i < chunks.size(); i++) {
+            byte[] chunk = chunks.get(i);
+            try {
+                transcripts.add(speechToTextClient.transcribe(chunk));
+            } catch (Exception e) {
+                log.error(
+                        "회의 음성 변환 실패: s3Key={}, chunkIndex={}, chunkCount={}, chunkBytes={}",
+                        s3Key,
+                        i + 1,
+                        chunks.size(),
+                        chunk.length,
+                        e
+                );
+                throw e;
+            }
+        }
+
+        String transcript = String.join(" ", transcripts);
+        log.info("회의 음성 변환 완료: s3Key={}, transcriptLength={}", s3Key, transcript.length());
+        return transcript;
     }
 
     @Override
