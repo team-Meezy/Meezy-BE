@@ -25,6 +25,7 @@ public class RecordingEventListener {
     public void handleRecordingReceived(RecordingReceivedEvent event) {
         log.info("회의 리포트 생성 시작: meetingId={}, s3Key={}", event.meetingId(), event.s3Key());
         try {
+            reportGenerator.markProcessing(event.meetingId());
             String transcript = meetingAnalyzerPort.transcribe(event.s3Key());
 
             reportGenerator.generate(event.meetingId(), transcript);
@@ -32,7 +33,24 @@ public class RecordingEventListener {
             audioStoragePort.deleteAudio(event.s3Key());
             log.info("회의 리포트 생성 완료: meetingId={}", event.meetingId());
         } catch (Exception e) {
+            markFailed(event, e);
             log.error("회의 리포트 생성 실패 (S3 오디오 유지됨): meetingId={}, s3Key={}", event.meetingId(), event.s3Key(), e);
         }
+    }
+
+    private void markFailed(RecordingReceivedEvent event, Exception e) {
+        try {
+            reportGenerator.markFailed(event.meetingId(), extractFailureReason(e));
+        } catch (Exception markFailedException) {
+            log.error("회의 리포트 실패 상태 저장 실패: meetingId={}", event.meetingId(), markFailedException);
+        }
+    }
+
+    private String extractFailureReason(Exception e) {
+        Throwable rootCause = e;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause.getMessage() != null ? rootCause.getMessage() : e.getClass().getSimpleName();
     }
 }

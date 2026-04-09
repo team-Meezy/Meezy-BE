@@ -31,6 +31,13 @@ public class MeetingReport extends AbstractAggregateRoot {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Feedback feedback;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private MeetingReportStatus status;
+
+    @Column(columnDefinition = "TEXT")
+    private String failureReason;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -40,8 +47,47 @@ public class MeetingReport extends AbstractAggregateRoot {
                 .meetingId(meetingId)
                 .summary(Summary.create(meetingId, summaryContent))
                 .feedback(Feedback.create(meetingId, feedbackContent))
+                .status(MeetingReportStatus.COMPLETED)
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+
+    public static MeetingReport createProcessing(MeetingId meetingId) {
+        return MeetingReport.builder()
+                .meetingReportId(MeetingReportId.newId())
+                .meetingId(meetingId)
+                .status(MeetingReportStatus.PROCESSING)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    public void markProcessing() {
+        this.summary = null;
+        this.feedback = null;
+        this.status = MeetingReportStatus.PROCESSING;
+        this.failureReason = null;
+    }
+
+    public void complete(String summaryContent, String feedbackContent) {
+        this.summary = Summary.create(meetingId, summaryContent);
+        this.feedback = Feedback.create(meetingId, feedbackContent);
+        this.status = MeetingReportStatus.COMPLETED;
+        this.failureReason = null;
+    }
+
+    public void fail(String reason) {
+        this.summary = null;
+        this.feedback = null;
+        this.status = MeetingReportStatus.FAILED;
+        this.failureReason = truncate(reason);
+    }
+
+    public boolean isCompleted() {
+        return this.status == null || this.status == MeetingReportStatus.COMPLETED;
+    }
+
+    public boolean isFailed() {
+        return this.status == MeetingReportStatus.FAILED;
     }
 
     public void updateSummaryContent(String content){
@@ -50,5 +96,12 @@ public class MeetingReport extends AbstractAggregateRoot {
 
     public void updateFeedbackContent(String content){
         this.feedback.updateContent(content);
+    }
+
+    private String truncate(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return null;
+        }
+        return reason.length() <= 1000 ? reason : reason.substring(0, 1000);
     }
 }

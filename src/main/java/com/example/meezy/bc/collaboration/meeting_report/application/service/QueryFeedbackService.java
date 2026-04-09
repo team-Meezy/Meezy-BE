@@ -6,6 +6,7 @@ import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepos
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.collaboration.meeting_report.application.service.dto.response.FeedbackResponse;
 import com.example.meezy.bc.collaboration.meeting_report.application.service.exception.MeetingReportNotFoundException;
+import com.example.meezy.bc.collaboration.meeting_report.application.service.exception.ReportGenerationFailedException;
 import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReport;
 import com.example.meezy.bc.collaboration.meeting_report.domain.repository.MeetingReportRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
@@ -33,6 +34,13 @@ public class QueryFeedbackService {
         MeetingReport report = meetingReportRepository.findByMeetingId_Value(meetingId)
                 .orElseThrow(MeetingReportNotFoundException::new);
 
+        if (report.isFailed()) {
+            throw new ReportGenerationFailedException();
+        }
+        if (!report.isCompleted() || report.getFeedback() == null) {
+            throw new MeetingReportNotFoundException();
+        }
+
         return FeedbackResponse.from(report.getFeedback(), teamId);
     }
 
@@ -43,6 +51,8 @@ public class QueryFeedbackService {
                 .toList();
 
         return meetingReportRepository.findAllByMeetingIdIn(meetingIds).stream()
+                .filter(MeetingReport::isCompleted)
+                .filter(report -> report.getFeedback() != null)
                 .map(report -> FeedbackResponse.from(report.getFeedback(), teamId))
                 .toList();
     }

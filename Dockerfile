@@ -19,6 +19,9 @@ RUN gradle bootJar --no-daemon -x test
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 # Build 스테이지에 있는 jar를 해당 컨테이너로 가져옴
 COPY --from=build /app/build/libs/*.jar app.jar
 

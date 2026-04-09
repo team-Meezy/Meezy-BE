@@ -21,6 +21,22 @@ public class ReportGenerator {
     private final MeetingReportRepository meetingReportRepository;
 
     @Transactional
+    public void markProcessing(UUID meetingId) {
+        MeetingReport report = findOrCreateReport(meetingId);
+        report.markProcessing();
+        meetingReportRepository.save(report);
+        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=PROCESSING", meetingId);
+    }
+
+    @Transactional
+    public void markFailed(UUID meetingId, String reason) {
+        MeetingReport report = findOrCreateReport(meetingId);
+        report.fail(reason);
+        meetingReportRepository.save(report);
+        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=FAILED", meetingId);
+    }
+
+    @Transactional
     public void generate(UUID meetingId, String transcript) {
         log.info("회의 리포트 조합 시작: meetingId={}, transcriptLength={}", meetingId, transcript.length());
         try {
@@ -33,11 +49,8 @@ public class ReportGenerator {
             String summary = summaryFuture.join();
             String feedback = feedbackFuture.join();
 
-            MeetingReport report = MeetingReport.create(
-                    MeetingId.of(meetingId),
-                    summary,
-                    feedback
-            );
+            MeetingReport report = findOrCreateReport(meetingId);
+            report.complete(summary, feedback);
 
             meetingReportRepository.save(report);
             log.info(
@@ -50,5 +63,11 @@ public class ReportGenerator {
             log.error("회의 리포트 저장 실패: meetingId={}", meetingId, e);
             throw e;
         }
+    }
+
+    private MeetingReport findOrCreateReport(UUID meetingId) {
+        MeetingId meetingReportMeetingId = MeetingId.of(meetingId);
+        return meetingReportRepository.findByMeetingId(meetingReportMeetingId)
+                .orElseGet(() -> MeetingReport.createProcessing(meetingReportMeetingId));
     }
 }

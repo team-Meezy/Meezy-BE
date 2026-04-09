@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,6 +51,7 @@ class ReportGeneratorTest {
     void generate_creates_and_saves_report() {
         given(meetingAnalyzerPort.generateSummary(anyString())).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(anyString())).willReturn(feedbackContent);
+        given(meetingReportRepository.findByMeetingId(org.mockito.ArgumentMatchers.any())).willReturn(Optional.empty());
 
         reportGenerator.generate(meetingId, transcript);
 
@@ -67,6 +69,7 @@ class ReportGeneratorTest {
     void generate_calls_meeting_analyzer_port() {
         given(meetingAnalyzerPort.generateSummary(transcript)).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(transcript)).willReturn(feedbackContent);
+        given(meetingReportRepository.findByMeetingId(org.mockito.ArgumentMatchers.any())).willReturn(Optional.empty());
 
         reportGenerator.generate(meetingId, transcript);
 

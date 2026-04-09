@@ -12,5 +12,7 @@ public interface AudioStoragePort {
 
     byte[] downloadAudio(String s3Key);
 
+    Path downloadAudioToTempFile(String s3Key);
+
     void deleteAudio(String s3Key);
 }

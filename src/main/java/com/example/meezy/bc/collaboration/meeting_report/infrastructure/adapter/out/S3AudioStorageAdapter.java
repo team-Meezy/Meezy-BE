@@ -155,6 +155,28 @@ public class S3AudioStorageAdapter implements AudioStoragePort {
     }
 
     @Override
+    public Path downloadAudioToTempFile(String s3Key) {
+        try {
+            String extension = s3Key.endsWith(".mp3") ? ".mp3" : ".audio";
+            Path tempFile = Files.createTempFile("recording-download-", extension);
+
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(s3Key)
+                    .build();
+
+            try (ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request)) {
+                Files.copy(response, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return tempFile;
+        } catch (Exception e) {
+            log.error("오디오 파일 다운로드 실패: key={}", s3Key, e);
+            throw new AudioDownloadFailedException();
+        }
+    }
+
+    @Override
     public void deleteAudio(String s3Key) {
         try {
             DeleteObjectRequest request = DeleteObjectRequest.builder()
