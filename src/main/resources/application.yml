@@ -172,3 +172,8 @@ webrtc:
 
 server:
   forward-headers-strategy: framework
+
+logging:
+  level:
+    com.example.meezy.bc.collaboration.participation_metrics: DEBUG
+    com.example.meezy.config.websocket: DEBUG
