@@ -18,6 +18,14 @@ public interface MeetingRepository extends JpaRepository<Meeting, MeetingId> {
 
     Optional<Meeting> findByMeetingId_Value(UUID meetingId);
 
+    @Query("""
+            SELECT DISTINCT m
+            FROM Meeting m
+            LEFT JOIN FETCH m.participants
+            WHERE m.meetingId.value = :meetingId
+            """)
+    Optional<Meeting> findByMeetingIdWithParticipants(@Param("meetingId") UUID meetingId);
+
     Optional<Meeting> findByTeamIdAndStatus(TeamId teamId, MeetingStatus status);
 
     List<Meeting> findAllByTeamId(TeamId teamId);

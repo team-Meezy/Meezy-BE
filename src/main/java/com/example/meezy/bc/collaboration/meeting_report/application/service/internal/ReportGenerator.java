@@ -21,16 +21,25 @@ public class ReportGenerator {
     private final MeetingReportRepository meetingReportRepository;
 
     @Transactional
-    public void markProcessing(UUID meetingId) {
-        MeetingReport report = findOrCreateReport(meetingId);
-        report.markProcessing();
+    public void markProcessing(UUID meetingId, String sourceAudioKey) {
+        MeetingReport report = findOrCreateReport(meetingId, sourceAudioKey);
+        report.markProcessing(sourceAudioKey);
         meetingReportRepository.save(report);
         log.info("회의 리포트 처리 상태 저장: meetingId={}, status=PROCESSING", meetingId);
     }
 
     @Transactional
     public void markFailed(UUID meetingId, String reason) {
-        MeetingReport report = findOrCreateReport(meetingId);
+        MeetingReport report = findOrCreateReport(meetingId, null);
+        report.fail(reason);
+        meetingReportRepository.save(report);
+        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=FAILED", meetingId);
+    }
+
+    @Transactional
+    public void markFailed(UUID meetingId, String sourceAudioKey, String reason) {
+        MeetingReport report = findOrCreateReport(meetingId, sourceAudioKey);
+        report.updateSourceAudioKey(sourceAudioKey);
         report.fail(reason);
         meetingReportRepository.save(report);
         log.info("회의 리포트 처리 상태 저장: meetingId={}, status=FAILED", meetingId);
@@ -49,7 +58,7 @@ public class ReportGenerator {
             String summary = summaryFuture.join();
             String feedback = feedbackFuture.join();
 
-            MeetingReport report = findOrCreateReport(meetingId);
+            MeetingReport report = findOrCreateReport(meetingId, null);
             report.complete(summary, feedback);
 
             meetingReportRepository.save(report);
@@ -65,9 +74,9 @@ public class ReportGenerator {
         }
     }
 
-    private MeetingReport findOrCreateReport(UUID meetingId) {
+    private MeetingReport findOrCreateReport(UUID meetingId, String sourceAudioKey) {
         MeetingId meetingReportMeetingId = MeetingId.of(meetingId);
         return meetingReportRepository.findByMeetingId(meetingReportMeetingId)
-                .orElseGet(() -> MeetingReport.createProcessing(meetingReportMeetingId));
+                .orElseGet(() -> MeetingReport.createProcessing(meetingReportMeetingId, sourceAudioKey));
     }
 }

@@ -2,6 +2,7 @@ package com.example.meezy.bc.collaboration.meeting_report.application.service;
 
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingNotFoundException;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.collaboration.meeting_report.application.service.dto.response.FeedbackResponse;
@@ -9,7 +10,10 @@ import com.example.meezy.bc.collaboration.meeting_report.application.service.exc
 import com.example.meezy.bc.collaboration.meeting_report.application.service.exception.ReportGenerationFailedException;
 import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReport;
 import com.example.meezy.bc.collaboration.meeting_report.domain.repository.MeetingReportRepository;
+import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
+import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
+import com.example.meezy.bc.user.user.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +27,13 @@ public class QueryFeedbackService {
 
     private final MeetingReportRepository meetingReportRepository;
     private final MeetingRepository meetingRepository;
+    private final TeamRepository teamRepository;
+    private final CurrentUserQuery currentUserQuery;
 
     @Transactional(readOnly = true)
     public FeedbackResponse findByMeetingId(UUID teamId, UUID meetingId) {
+        validateTeamMembership(teamId, currentUserQuery.currentUser().userId());
+
         Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
                 .orElseThrow(MeetingNotFoundException::new);
 
@@ -46,6 +54,8 @@ public class QueryFeedbackService {
 
     @Transactional(readOnly = true)
     public List<FeedbackResponse> findAllByTeamId(UUID teamId) {
+        validateTeamMembership(teamId, currentUserQuery.currentUser().userId());
+
         List<MeetingId> meetingIds = meetingRepository.findAllByTeamId(TeamId.of(teamId)).stream()
                 .map(Meeting::getMeetingId)
                 .toList();
@@ -55,5 +65,11 @@ public class QueryFeedbackService {
                 .filter(report -> report.getFeedback() != null)
                 .map(report -> FeedbackResponse.from(report.getFeedback(), teamId))
                 .toList();
+    }
+
+    private void validateTeamMembership(UUID teamId, UserId userId) {
+        if (!teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)) {
+            throw new NotTeamMemberException();
+        }
     }
 }

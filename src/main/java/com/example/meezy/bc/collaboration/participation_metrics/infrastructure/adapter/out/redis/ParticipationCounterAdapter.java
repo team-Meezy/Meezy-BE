@@ -2,6 +2,7 @@ package com.example.meezy.bc.collaboration.participation_metrics.infrastructure.
 
 import com.example.meezy.bc.collaboration.participation_metrics.application.port.out.ParticipationCounterPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ParticipationCounterAdapter implements ParticipationCounterPort {
@@ -46,23 +48,27 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
     @Override
     public void incrementVoiceCount(UUID meetingId, UUID userId) {
         String key = buildVoiceKey(meetingId);
-        redisTemplate.execute(
+        Long newCount = redisTemplate.execute(
                 HASH_INCREMENT_SCRIPT,
                 List.of(key),
                 userId.toString(),
                 String.valueOf(KEY_TTL.getSeconds())
         );
+        log.debug("Incremented voice participation counter: meetingId={}, userId={}, key={}, newCount={}",
+                meetingId, userId, key, newCount);
     }
 
     @Override
     public void incrementChatCount(UUID meetingId, UUID userId) {
         String key = buildChatKey(meetingId);
-        redisTemplate.execute(
+        Long newCount = redisTemplate.execute(
                 HASH_INCREMENT_SCRIPT,
                 List.of(key),
                 userId.toString(),
                 String.valueOf(KEY_TTL.getSeconds())
         );
+        log.debug("Incremented chat participation counter: meetingId={}, userId={}, key={}, newCount={}",
+                meetingId, userId, key, newCount);
     }
 
     @Override
@@ -82,13 +88,19 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
     @Override
     public Map<UUID, Integer> getAllVoiceCounts(UUID meetingId) {
         String key = buildVoiceKey(meetingId);
-        return getAllCounts(key);
+        Map<UUID, Integer> counts = getAllCounts(key);
+        log.debug("Loaded all voice participation counters: meetingId={}, key={}, entryCount={}, counts={}",
+                meetingId, key, counts.size(), counts);
+        return counts;
     }
 
     @Override
     public Map<UUID, Integer> getAllChatCounts(UUID meetingId) {
         String key = buildChatKey(meetingId);
-        return getAllCounts(key);
+        Map<UUID, Integer> counts = getAllCounts(key);
+        log.debug("Loaded all chat participation counters: meetingId={}, key={}, entryCount={}, counts={}",
+                meetingId, key, counts.size(), counts);
+        return counts;
     }
 
     @Override
@@ -97,6 +109,8 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
         String chatKey = buildChatKey(meetingId);
         String participantsKey = buildParticipantsKey(meetingId);
         redisTemplate.delete(List.of(voiceKey, chatKey, participantsKey));
+        log.info("Cleared participation Redis keys: meetingId={}, keys={}",
+                meetingId, List.of(voiceKey, chatKey, participantsKey));
     }
 
     @Override
@@ -104,18 +118,22 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
         String key = buildParticipantsKey(meetingId);
         Set<String> members = redisTemplate.opsForSet().members(key);
         if (members == null || members.isEmpty()) {
+            log.debug("Participation participant cache miss: meetingId={}, key={}", meetingId, key);
             return Optional.empty();
         }
-        return Optional.of(
-                members.stream()
-                        .map(UUID::fromString)
-                        .collect(Collectors.toSet())
-        );
+        Set<UUID> participantIds = members.stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toSet());
+        log.debug("Participation participant cache hit: meetingId={}, key={}, participantCount={}, participantIds={}",
+                meetingId, key, participantIds.size(), participantIds);
+        return Optional.of(participantIds);
     }
 
     @Override
     public void cacheParticipantIds(UUID meetingId, Set<UUID> participantIds) {
         if (participantIds.isEmpty()) {
+            log.debug("Skipping participation participant cache store because active participant set is empty: meetingId={}",
+                    meetingId);
             return;
         }
         String key = buildParticipantsKey(meetingId);
@@ -127,12 +145,15 @@ public class ParticipationCounterAdapter implements ParticipationCounterPort {
                 List.of(key),
                 (Object[]) args.toArray(String[]::new)
         );
+        log.debug("Stored participation participant cache: meetingId={}, key={}, participantCount={}, ttlSeconds={}",
+                meetingId, key, participantIds.size(), PARTICIPANTS_CACHE_TTL.getSeconds());
     }
 
     @Override
     public void evictCachedParticipantIds(UUID meetingId) {
         String key = buildParticipantsKey(meetingId);
         redisTemplate.delete(key);
+        log.debug("Evicted participation participant cache: meetingId={}, key={}", meetingId, key);
     }
 
     private Map<UUID, Integer> getAllCounts(String key) {

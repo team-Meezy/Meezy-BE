@@ -21,6 +21,7 @@ import java.util.UUID;
 public class ReceiveRecordingService {
 
     private final RecordingAsyncProcessor asyncProcessor;
+    private final RecordingTransactionHandler transactionHandler;
     private final CurrentUserQuery currentUserQuery;
     private final TeamRepository teamRepository;
 
@@ -33,17 +34,13 @@ public class ReceiveRecordingService {
                 recording != null ? recording.getSize() : null,
                 recording != null ? recording.getContentType() : null
         );
-        // ① 팀 멤버 검증
+
         UserId currentUserId = currentUserQuery.currentUser().userId();
         validateTeamMembership(teamId, currentUserId);
-
-        // ② 파일 형식 검증만 (DB 접근 없음)
         validateRecording(recording);
+        transactionHandler.validateMeetingOwnership(teamId, meetingId);
 
-        // ② Spring multipart 임시파일 경로 직접 사용 (복사 없음)
         Path tempFile = extractTempFilePath(recording);
-
-        // ③ 비동기: 팀 검증 + S3 업로드 + DB 저장
         asyncProcessor.process(teamId, meetingId, tempFile);
         log.info("녹음 업로드 비동기 처리 위임 완료: teamId={}, meetingId={}", teamId, meetingId);
     }

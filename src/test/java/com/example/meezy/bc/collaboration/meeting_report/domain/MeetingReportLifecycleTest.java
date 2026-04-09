@@ -13,7 +13,7 @@ class MeetingReportLifecycleTest {
     @DisplayName("processing report can complete with generated content")
     void processingReportCanComplete() {
         MeetingId meetingId = MeetingId.newId();
-        MeetingReport report = MeetingReport.createProcessing(meetingId);
+        MeetingReport report = MeetingReport.createProcessing(meetingId, "recordings/test.mp3");
 
         report.complete("summary", "feedback");
 
@@ -21,6 +21,7 @@ class MeetingReportLifecycleTest {
         assertThat(report.getSummary()).isNotNull();
         assertThat(report.getFeedback()).isNotNull();
         assertThat(report.getFailureReason()).isNull();
+        assertThat(report.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
     }
 
     @Test
@@ -29,12 +30,13 @@ class MeetingReportLifecycleTest {
         MeetingId meetingId = MeetingId.newId();
         MeetingReport report = MeetingReport.create(meetingId, "summary", "feedback");
 
-        report.markProcessing();
+        report.markProcessing("recordings/test.mp3");
         report.fail("stt failed");
 
         assertThat(report.isFailed()).isTrue();
         assertThat(report.getSummary()).isNull();
         assertThat(report.getFeedback()).isNull();
         assertThat(report.getFailureReason()).isEqualTo("stt failed");
+        assertThat(report.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
     }
 }

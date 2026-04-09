@@ -1,7 +1,9 @@
 package com.example.meezy.bc.collaboration.meeting_report.application.service.internal;
 
+import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.collaboration.meeting_report.application.port.out.MeetingAnalyzerPort;
 import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReport;
+import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReportStatus;
 import com.example.meezy.bc.collaboration.meeting_report.domain.repository.MeetingReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -51,7 +54,7 @@ class ReportGeneratorTest {
     void generate_creates_and_saves_report() {
         given(meetingAnalyzerPort.generateSummary(anyString())).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(anyString())).willReturn(feedbackContent);
-        given(meetingReportRepository.findByMeetingId(org.mockito.ArgumentMatchers.any())).willReturn(Optional.empty());
+        given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
         reportGenerator.generate(meetingId, transcript);
 
@@ -69,11 +72,43 @@ class ReportGeneratorTest {
     void generate_calls_meeting_analyzer_port() {
         given(meetingAnalyzerPort.generateSummary(transcript)).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(transcript)).willReturn(feedbackContent);
-        given(meetingReportRepository.findByMeetingId(org.mockito.ArgumentMatchers.any())).willReturn(Optional.empty());
+        given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
         reportGenerator.generate(meetingId, transcript);
 
         verify(meetingAnalyzerPort).generateSummary(transcript);
         verify(meetingAnalyzerPort).generateFeedback(transcript);
+    }
+
+    @Test
+    @DisplayName("실패 상태를 저장할 때 sourceAudioKey를 함께 보관한다")
+    void markFailed_stores_source_audio_key() {
+        given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
+
+        reportGenerator.markFailed(meetingId, "recordings/test.mp3", "stt failed");
+
+        ArgumentCaptor<MeetingReport> captor = ArgumentCaptor.forClass(MeetingReport.class);
+        verify(meetingReportRepository).save(captor.capture());
+
+        MeetingReport savedReport = captor.getValue();
+        assertThat(savedReport.getStatus()).isEqualTo(MeetingReportStatus.FAILED);
+        assertThat(savedReport.getFailureReason()).isEqualTo("stt failed");
+        assertThat(savedReport.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
+    }
+
+    @Test
+    @DisplayName("처리 시작 시 sourceAudioKey를 저장한다")
+    void markProcessing_stores_source_audio_key() {
+        given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
+
+        reportGenerator.markProcessing(meetingId, "recordings/test.mp3");
+
+        ArgumentCaptor<MeetingReport> captor = ArgumentCaptor.forClass(MeetingReport.class);
+        verify(meetingReportRepository).save(captor.capture());
+
+        MeetingReport savedReport = captor.getValue();
+        assertThat(savedReport.getMeetingId()).isEqualTo(MeetingId.of(meetingId));
+        assertThat(savedReport.getStatus()).isEqualTo(MeetingReportStatus.PROCESSING);
+        assertThat(savedReport.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
     }
 }

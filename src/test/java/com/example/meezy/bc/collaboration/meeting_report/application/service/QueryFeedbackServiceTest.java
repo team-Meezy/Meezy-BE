@@ -2,13 +2,17 @@ package com.example.meezy.bc.collaboration.meeting_report.application.service;
 
 import com.example.meezy.bc.collaboration.meeting.domain.Meeting;
 import com.example.meezy.bc.collaboration.meeting.domain.exception.MeetingNotFoundException;
+import com.example.meezy.bc.collaboration.meeting.domain.exception.NotTeamMemberException;
 import com.example.meezy.bc.collaboration.meeting.domain.repository.MeetingRepository;
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.collaboration.meeting_report.application.service.dto.response.FeedbackResponse;
 import com.example.meezy.bc.collaboration.meeting_report.application.service.exception.MeetingReportNotFoundException;
 import com.example.meezy.bc.collaboration.meeting_report.domain.MeetingReport;
 import com.example.meezy.bc.collaboration.meeting_report.domain.repository.MeetingReportRepository;
+import com.example.meezy.bc.collaboration.team.domain.repository.TeamRepository;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
+import com.example.meezy.bc.sharedkernel.user.AuthenticatedUser;
+import com.example.meezy.bc.sharedkernel.user.CurrentUserQuery;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +30,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +43,12 @@ class QueryFeedbackServiceTest {
     @Mock
     private MeetingRepository meetingRepository;
 
+    @Mock
+    private TeamRepository teamRepository;
+
+    @Mock
+    private CurrentUserQuery currentUserQuery;
+
     @InjectMocks
     private QueryFeedbackService queryFeedbackService;
 
@@ -47,15 +58,21 @@ class QueryFeedbackServiceTest {
     private MeetingId meetingId;
     private Meeting meeting;
     private MeetingReport report;
+    private AuthenticatedUser authenticatedUser;
 
     @BeforeEach
     void setUp() {
         teamIdValue = UUID.randomUUID();
         teamId = TeamId.of(teamIdValue);
-        meetingIdValue = UUID.randomUUID();
-        meetingId = MeetingId.of(meetingIdValue);
         meeting = Meeting.start(teamId, UserId.newId());
+        meetingId = meeting.getMeetingId();
+        meetingIdValue = meetingId.value();
         report = MeetingReport.create(meetingId, "요약 내용", "피드백 내용");
+        authenticatedUser = AuthenticatedUser.builder()
+                .userId(UserId.newId())
+                .accountId("feedback-user")
+                .name("Feedback User")
+                .build();
     }
 
     @Nested
@@ -65,6 +82,7 @@ class QueryFeedbackServiceTest {
         @Test
         @DisplayName("meetingId로 피드백을 조회할 수 있다")
         void findByMeetingId_returns_feedback() {
+            allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(meeting));
             given(meetingReportRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(report));
 
@@ -76,8 +94,18 @@ class QueryFeedbackServiceTest {
         }
 
         @Test
+        @DisplayName("팀 멤버가 아니면 피드백을 조회할 수 없다")
+        void findByMeetingId_throws_when_not_team_member() {
+            denyTeamAccess();
+
+            assertThatThrownBy(() -> queryFeedbackService.findByMeetingId(teamIdValue, meetingIdValue))
+                    .isInstanceOf(NotTeamMemberException.class);
+        }
+
+        @Test
         @DisplayName("회의가 존재하지 않으면 예외가 발생한다")
         void findByMeetingId_throws_when_meeting_not_found() {
+            allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> queryFeedbackService.findByMeetingId(teamIdValue, meetingIdValue))
@@ -87,6 +115,7 @@ class QueryFeedbackServiceTest {
         @Test
         @DisplayName("리포트가 존재하지 않으면 예외가 발생한다")
         void findByMeetingId_throws_when_report_not_found() {
+            allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(meeting));
             given(meetingReportRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.empty());
 
@@ -102,6 +131,7 @@ class QueryFeedbackServiceTest {
         @Test
         @DisplayName("팀의 모든 피드백을 조회할 수 있다")
         void findAllByTeamId_returns_all_feedbacks() {
+            allowTeamAccess();
             Meeting meeting2 = Meeting.start(teamId, UserId.newId());
             MeetingReport report2 = MeetingReport.create(meeting2.getMeetingId(), "요약 2", "피드백 2");
 
@@ -116,6 +146,7 @@ class QueryFeedbackServiceTest {
         @Test
         @DisplayName("리포트가 없으면 빈 리스트를 반환한다")
         void findAllByTeamId_returns_empty_when_no_reports() {
+            allowTeamAccess();
             given(meetingRepository.findAllByTeamId(any(TeamId.class))).willReturn(List.of(meeting));
             given(meetingReportRepository.findAllByMeetingIdIn(any())).willReturn(List.of());
 
@@ -123,5 +154,15 @@ class QueryFeedbackServiceTest {
 
             assertThat(responses).isEmpty();
         }
+    }
+
+    private void allowTeamAccess() {
+        given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
+        given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class))).willReturn(true);
+    }
+
+    private void denyTeamAccess() {
+        given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
+        given(teamRepository.existsMemberByTeamIdAndUserId(eq(teamIdValue), any(UserId.class))).willReturn(false);
     }
 }

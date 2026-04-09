@@ -25,7 +25,7 @@ public class RecordingEventListener {
     public void handleRecordingReceived(RecordingReceivedEvent event) {
         log.info("회의 리포트 생성 시작: meetingId={}, s3Key={}", event.meetingId(), event.s3Key());
         try {
-            reportGenerator.markProcessing(event.meetingId());
+            reportGenerator.markProcessing(event.meetingId(), event.s3Key());
             String transcript = meetingAnalyzerPort.transcribe(event.s3Key());
 
             reportGenerator.generate(event.meetingId(), transcript);
@@ -40,7 +40,7 @@ public class RecordingEventListener {
 
     private void markFailed(RecordingReceivedEvent event, Exception e) {
         try {
-            reportGenerator.markFailed(event.meetingId(), extractFailureReason(e));
+            reportGenerator.markFailed(event.meetingId(), event.s3Key(), extractFailureReason(e));
         } catch (Exception markFailedException) {
             log.error("회의 리포트 실패 상태 저장 실패: meetingId={}", event.meetingId(), markFailedException);
         }

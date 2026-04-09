@@ -36,7 +36,7 @@ public class ParticipationMetricsGenerator {
     @Transactional
     public void generate(UUID meetingId) {
         if (participationMetricsRepository.existsByMeetingId(MeetingId.of(meetingId))) {
-            log.warn("이미 참여 지표가 존재합니다: meetingId={}", meetingId);
+            log.warn("Skipping participation metrics generation because metrics already exist: meetingId={}", meetingId);
             return;
         }
 
@@ -53,8 +53,14 @@ public class ParticipationMetricsGenerator {
         Map<UUID, Long> connectionDurations = calculateConnectionDurations(meeting);
         Map<UUID, Integer> voiceCounts = participationCounterPort.getAllVoiceCounts(meetingId);
         Map<UUID, Integer> chatCounts = participationCounterPort.getAllChatCounts(meetingId);
-
         long meetingDurationSeconds = calculateMeetingDuration(meeting);
+
+        log.info("Loaded participation counters for metrics generation: meetingId={}, meetingDurationSeconds={}, connectionDurations={}, voiceCounts={}, chatCounts={}",
+                meetingId, meetingDurationSeconds, connectionDurations, voiceCounts, chatCounts);
+
+        if (voiceCounts.isEmpty() && chatCounts.isEmpty()) {
+            log.warn("No participation counters found in Redis when generating metrics: meetingId={}", meetingId);
+        }
 
         ParticipationMetrics metrics = ParticipationMetrics.create(
                 meeting.getMeetingId(),
@@ -68,10 +74,12 @@ public class ParticipationMetricsGenerator {
 
         participationMetricsRepository.save(metrics);
 
-        log.info("참여 지표 생성 완료: meetingId={}, participantCount={}", meetingId, allMemberIds.size());
+        log.info("Generated participation metrics: meetingId={}, teamId={}, participantCount={}, voiceCounterUsers={}, chatCounterUsers={}",
+                meetingId, meeting.getTeamId().value(), allMemberIds.size(), voiceCounts.size(), chatCounts.size());
     }
 
     public void clearRedisData(UUID meetingId) {
+        log.info("Clearing participation Redis data after metrics generation: meetingId={}", meetingId);
         participationCounterPort.clearMeetingData(meetingId);
     }
 

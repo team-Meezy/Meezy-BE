@@ -1,5 +1,6 @@
 package com.example.meezy.bc.collaboration.meeting.application.service;
 
+import com.example.meezy.bc.collaboration.meeting.application.port.out.RecordingFailureReporter;
 import com.example.meezy.bc.sharedkernel.file.AudioStoragePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,28 +19,26 @@ public class RecordingAsyncProcessor {
 
     private final AudioStoragePort audioStoragePort;
     private final RecordingTransactionHandler transactionHandler;
+    private final RecordingFailureReporter recordingFailureReporter;
 
     @Async
     public void process(UUID teamId, UUID meetingId, Path tempFile) {
         log.info("녹음 비동기 처리 시작: teamId={}, meetingId={}, tempFile={}", teamId, meetingId, tempFile);
         try {
-            // ① 팀/회의 검증 (비동기 스레드에서)
             transactionHandler.validateMeetingOwnership(teamId, meetingId);
 
-            // ② S3 업로드
             String s3Key = audioStoragePort.uploadAudioFromPath(tempFile);
             log.info("녹음 S3 업로드 완료: meetingId={}, s3Key={}", meetingId, s3Key);
 
             try {
-                // ③ DB 저장 + 이벤트 발행
                 transactionHandler.saveRecording(teamId, meetingId, s3Key);
                 log.info("녹음 비동기 처리 완료: meetingId={}, s3Key={}", meetingId, s3Key);
             } catch (Exception e) {
-                log.error("녹음 DB 저장 실패, S3 파일 삭제: key={}", s3Key, e);
+                log.error("녹음 DB 저장 실패, 실패 상태 기록: key={}", s3Key, e);
                 try {
-                    audioStoragePort.deleteAudio(s3Key);
-                } catch (Exception deleteEx) {
-                    log.error("S3 보상 삭제 실패 (고아 파일 발생): key={}", s3Key, deleteEx);
+                    recordingFailureReporter.markFailed(meetingId, s3Key, extractFailureReason(e));
+                } catch (Exception failureReportException) {
+                    log.error("녹음 실패 상태 기록 실패: key={}", s3Key, failureReportException);
                 }
             }
         } catch (Exception e) {
@@ -47,6 +46,14 @@ public class RecordingAsyncProcessor {
         } finally {
             deleteTempFile(tempFile);
         }
+    }
+
+    private String extractFailureReason(Exception e) {
+        Throwable rootCause = e;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause.getMessage() != null ? rootCause.getMessage() : e.getClass().getSimpleName();
     }
 
     private void deleteTempFile(Path tempFile) {
