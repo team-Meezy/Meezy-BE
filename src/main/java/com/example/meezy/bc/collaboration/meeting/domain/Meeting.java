@@ -1,6 +1,5 @@
 package com.example.meezy.bc.collaboration.meeting.domain;
 
-import com.example.meezy.bc.sharedkernel.domain.AbstractAggregateRoot;
 import com.example.meezy.bc.collaboration.meeting.domain.event.MeetingEndedEvent;
 import com.example.meezy.bc.collaboration.meeting.domain.event.ParticipantJoinedEvent;
 import com.example.meezy.bc.collaboration.meeting.domain.event.ParticipantLeftEvent;
@@ -11,9 +10,23 @@ import com.example.meezy.bc.collaboration.meeting.domain.exception.ParticipantNo
 import com.example.meezy.bc.collaboration.meeting.domain.type.MeetingStatus;
 import com.example.meezy.bc.collaboration.meeting.domain.vo.MeetingId;
 import com.example.meezy.bc.collaboration.team.domain.vo.TeamId;
+import com.example.meezy.bc.sharedkernel.domain.AbstractAggregateRoot;
 import com.example.meezy.bc.user.user.domain.vo.UserId;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -77,7 +90,7 @@ public class Meeting extends AbstractAggregateRoot {
         MeetingParticipant existingParticipant = findParticipantByUserId(userId);
 
         if (existingParticipant != null && existingParticipant.isActive()) {
-            return; //회의를 처음 참가가 아니면서 현재 참가자면 무시
+            return; //?뚯쓽瑜?泥섏쓬 李멸?媛 ?꾨땲硫댁꽌 ?꾩옱 李멸??먮㈃ 臾댁떆
         }
 
         List<UUID> existingParticipantIds = getActiveParticipantUserIds();
@@ -102,7 +115,7 @@ public class Meeting extends AbstractAggregateRoot {
         MeetingParticipant participant = findParticipantByUserIdOrThrow(userId);
 
         if (!participant.isActive()) {
-            return; //회의가 실행 중이 아니라면 무시
+            return; //?뚯쓽媛 ?ㅽ뻾 以묒씠 ?꾨땲?쇰㈃ 臾댁떆
         }
 
         participant.leave();
@@ -119,9 +132,8 @@ public class Meeting extends AbstractAggregateRoot {
     }
 
     public void end() {
-
-        if(!isActive()){
-            return; //이미 종료된 미팅이라면 무시
+        if (!isActive()) {
+            return; //?대? 醫낅즺??誘명똿?대씪硫?臾댁떆
         }
         this.status = MeetingStatus.ENDED;
         this.endedAt = LocalDateTime.now();
@@ -136,13 +148,17 @@ public class Meeting extends AbstractAggregateRoot {
         ));
     }
 
-    public void receiveRecording(String s3Key) {
+    public void receiveRecording(String s3Key, String title) {
         if (s3Key == null || s3Key.isBlank()) {
-            throw new IllegalArgumentException("s3Key는 null이거나 빈 값일 수 없습니다.");
+            throw new IllegalArgumentException("s3Key??null?닿굅??鍮?媛믪씪 ???놁뒿?덈떎.");
+        }
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("title??null?닿굅??鍮?媛믪씪 ???놁뒿?덈떎.");
         }
         registerEvent(new RecordingReceivedEvent(
                 meetingId.value(),
-                s3Key
+                s3Key,
+                title
         ));
     }
 

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record RecordingReceivedEvent(
         UUID meetingId,
-        String s3Key
+        String s3Key,
+        String title
 ) {
 }

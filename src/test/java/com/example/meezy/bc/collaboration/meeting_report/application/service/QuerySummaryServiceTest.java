@@ -34,7 +34,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("QuerySummaryService 테스트")
+@DisplayName("QuerySummaryService tests")
 class QuerySummaryServiceTest {
 
     @Mock
@@ -55,7 +55,6 @@ class QuerySummaryServiceTest {
     private UUID teamIdValue;
     private TeamId teamId;
     private UUID meetingIdValue;
-    private MeetingId meetingId;
     private Meeting meeting;
     private MeetingReport report;
     private AuthenticatedUser authenticatedUser;
@@ -65,9 +64,8 @@ class QuerySummaryServiceTest {
         teamIdValue = UUID.randomUUID();
         teamId = TeamId.of(teamIdValue);
         meeting = Meeting.start(teamId, UserId.newId());
-        meetingId = meeting.getMeetingId();
-        meetingIdValue = meetingId.value();
-        report = MeetingReport.create(meetingId, "요약 내용", "피드백 내용");
+        meetingIdValue = meeting.getMeetingId().value();
+        report = MeetingReport.create(MeetingId.of(meetingIdValue), "Sprint Review", "summary content", "feedback content");
         authenticatedUser = AuthenticatedUser.builder()
                 .userId(UserId.newId())
                 .accountId("summary-user")
@@ -76,11 +74,11 @@ class QuerySummaryServiceTest {
     }
 
     @Nested
-    @DisplayName("단일 조회")
+    @DisplayName("findByMeetingId")
     class FindByMeetingIdTest {
 
         @Test
-        @DisplayName("meetingId로 요약을 조회할 수 있다")
+        @DisplayName("returns summary with shared title")
         void findByMeetingId_returns_summary() {
             allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(meeting));
@@ -89,12 +87,13 @@ class QuerySummaryServiceTest {
             SummaryResponse response = querySummaryService.findByMeetingId(teamIdValue, meetingIdValue);
 
             assertThat(response).isNotNull();
-            assertThat(response.content()).isEqualTo("요약 내용");
+            assertThat(response.title()).isEqualTo("Sprint Review");
+            assertThat(response.content()).isEqualTo("summary content");
             assertThat(response.teamId()).isEqualTo(teamIdValue);
         }
 
         @Test
-        @DisplayName("팀 멤버가 아니면 요약을 조회할 수 없다")
+        @DisplayName("throws when requester is not a team member")
         void findByMeetingId_throws_when_not_team_member() {
             denyTeamAccess();
 
@@ -103,7 +102,7 @@ class QuerySummaryServiceTest {
         }
 
         @Test
-        @DisplayName("회의가 존재하지 않으면 예외가 발생한다")
+        @DisplayName("throws when meeting does not exist")
         void findByMeetingId_throws_when_meeting_not_found() {
             allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.empty());
@@ -113,7 +112,7 @@ class QuerySummaryServiceTest {
         }
 
         @Test
-        @DisplayName("리포트가 존재하지 않으면 예외가 발생한다")
+        @DisplayName("throws when report does not exist")
         void findByMeetingId_throws_when_report_not_found() {
             allowTeamAccess();
             given(meetingRepository.findByMeetingId_Value(meetingIdValue)).willReturn(Optional.of(meeting));
@@ -125,15 +124,15 @@ class QuerySummaryServiceTest {
     }
 
     @Nested
-    @DisplayName("전체 조회")
+    @DisplayName("findAllByTeamId")
     class FindAllByTeamIdTest {
 
         @Test
-        @DisplayName("팀의 모든 요약을 조회할 수 있다")
+        @DisplayName("returns all summaries")
         void findAllByTeamId_returns_all_summaries() {
             allowTeamAccess();
             Meeting meeting2 = Meeting.start(teamId, UserId.newId());
-            MeetingReport report2 = MeetingReport.create(meeting2.getMeetingId(), "요약 2", "피드백 2");
+            MeetingReport report2 = MeetingReport.create(meeting2.getMeetingId(), "Retrospective", "summary 2", "feedback 2");
 
             given(meetingRepository.findAllByTeamId(any(TeamId.class))).willReturn(List.of(meeting, meeting2));
             given(meetingReportRepository.findAllByMeetingIdIn(any())).willReturn(List.of(report, report2));
@@ -141,10 +140,12 @@ class QuerySummaryServiceTest {
             List<SummaryResponse> responses = querySummaryService.findAllByTeamId(teamIdValue);
 
             assertThat(responses).hasSize(2);
+            assertThat(responses).extracting(SummaryResponse::title)
+                    .containsExactlyInAnyOrder("Sprint Review", "Retrospective");
         }
 
         @Test
-        @DisplayName("리포트가 없으면 빈 리스트를 반환한다")
+        @DisplayName("returns empty list when no reports exist")
         void findAllByTeamId_returns_empty_when_no_reports() {
             allowTeamAccess();
             given(meetingRepository.findAllByTeamId(any(TeamId.class))).willReturn(List.of(meeting));

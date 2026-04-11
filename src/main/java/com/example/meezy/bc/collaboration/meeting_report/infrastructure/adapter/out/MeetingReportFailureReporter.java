@@ -14,7 +14,7 @@ public class MeetingReportFailureReporter implements RecordingFailureReporter {
     private final ReportGenerator reportGenerator;
 
     @Override
-    public void markFailed(UUID meetingId, String sourceAudioKey, String reason) {
-        reportGenerator.markFailed(meetingId, sourceAudioKey, reason);
+    public void markFailed(UUID meetingId, String sourceAudioKey, String title, String reason) {
+        reportGenerator.markFailed(meetingId, sourceAudioKey, title, reason);
     }
 }

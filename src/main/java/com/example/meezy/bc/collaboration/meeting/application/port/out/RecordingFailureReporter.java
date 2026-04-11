@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public interface RecordingFailureReporter {
 
-    void markFailed(UUID meetingId, String sourceAudioKey, String reason);
+    void markFailed(UUID meetingId, String sourceAudioKey, String title, String reason);
 }

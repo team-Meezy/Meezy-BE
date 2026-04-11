@@ -275,7 +275,7 @@ class MeetingTest {
         void receiveRecording_registers_event() {
             Meeting meeting = Meeting.start(teamId, hostUserId);
 
-            meeting.receiveRecording("recordings/test-key.mp3");
+            meeting.receiveRecording("recordings/test-key.mp3", "Sprint Review");
 
             assertThat(meeting.pullDomainEvents())
                     .hasAtLeastOneElementOfType(RecordingReceivedEvent.class);

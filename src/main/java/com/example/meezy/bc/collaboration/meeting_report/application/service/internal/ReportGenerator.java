@@ -21,33 +21,35 @@ public class ReportGenerator {
     private final MeetingReportRepository meetingReportRepository;
 
     @Transactional
-    public void markProcessing(UUID meetingId, String sourceAudioKey) {
-        MeetingReport report = findOrCreateReport(meetingId, sourceAudioKey);
-        report.markProcessing(sourceAudioKey);
+    public void markProcessing(UUID meetingId, String sourceAudioKey, String title) {
+        MeetingReport report = findOrCreateReport(meetingId, title, sourceAudioKey);
+        report.markProcessing(title, sourceAudioKey);
         meetingReportRepository.save(report);
-        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=PROCESSING", meetingId);
+        log.info("?뚯쓽 由ы룷??泥섎━ ?곹깭 ??? meetingId={}, status=PROCESSING", meetingId);
     }
 
     @Transactional
-    public void markFailed(UUID meetingId, String reason) {
-        MeetingReport report = findOrCreateReport(meetingId, null);
+    public void markFailed(UUID meetingId, String title, String reason) {
+        MeetingReport report = findOrCreateReport(meetingId, title, null);
+        report.updateTitle(title);
         report.fail(reason);
         meetingReportRepository.save(report);
-        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=FAILED", meetingId);
+        log.info("?뚯쓽 由ы룷??泥섎━ ?곹깭 ??? meetingId={}, status=FAILED", meetingId);
     }
 
     @Transactional
-    public void markFailed(UUID meetingId, String sourceAudioKey, String reason) {
-        MeetingReport report = findOrCreateReport(meetingId, sourceAudioKey);
+    public void markFailed(UUID meetingId, String sourceAudioKey, String title, String reason) {
+        MeetingReport report = findOrCreateReport(meetingId, title, sourceAudioKey);
+        report.updateTitle(title);
         report.updateSourceAudioKey(sourceAudioKey);
         report.fail(reason);
         meetingReportRepository.save(report);
-        log.info("회의 리포트 처리 상태 저장: meetingId={}, status=FAILED", meetingId);
+        log.info("?뚯쓽 由ы룷??泥섎━ ?곹깭 ??? meetingId={}, status=FAILED", meetingId);
     }
 
     @Transactional
-    public void generate(UUID meetingId, String transcript) {
-        log.info("회의 리포트 조합 시작: meetingId={}, transcriptLength={}", meetingId, transcript.length());
+    public void generate(UUID meetingId, String title, String transcript) {
+        log.info("?뚯쓽 由ы룷??議고빀 ?쒖옉: meetingId={}, transcriptLength={}", meetingId, transcript.length());
         try {
             CompletableFuture<String> summaryFuture = CompletableFuture
                     .supplyAsync(() -> meetingAnalyzerPort.generateSummary(transcript));
@@ -58,25 +60,25 @@ public class ReportGenerator {
             String summary = summaryFuture.join();
             String feedback = feedbackFuture.join();
 
-            MeetingReport report = findOrCreateReport(meetingId, null);
-            report.complete(summary, feedback);
+            MeetingReport report = findOrCreateReport(meetingId, title, null);
+            report.complete(title, summary, feedback);
 
             meetingReportRepository.save(report);
             log.info(
-                    "회의 리포트 저장 완료: meetingId={}, summaryLength={}, feedbackLength={}",
+                    "?뚯쓽 由ы룷??????꾨즺: meetingId={}, summaryLength={}, feedbackLength={}",
                     meetingId,
                     summary.length(),
                     feedback.length()
             );
         } catch (Exception e) {
-            log.error("회의 리포트 저장 실패: meetingId={}", meetingId, e);
+            log.error("?뚯쓽 由ы룷??????ㅽ뙣: meetingId={}", meetingId, e);
             throw e;
         }
     }
 
-    private MeetingReport findOrCreateReport(UUID meetingId, String sourceAudioKey) {
+    private MeetingReport findOrCreateReport(UUID meetingId, String title, String sourceAudioKey) {
         MeetingId meetingReportMeetingId = MeetingId.of(meetingId);
         return meetingReportRepository.findByMeetingId(meetingReportMeetingId)
-                .orElseGet(() -> MeetingReport.createProcessing(meetingReportMeetingId, sourceAudioKey));
+                .orElseGet(() -> MeetingReport.createProcessing(meetingReportMeetingId, title, sourceAudioKey));
     }
 }

@@ -1,13 +1,22 @@
 package com.example.meezy.bc.collaboration.meeting.presentation.controller;
 
-import com.example.meezy.bc.collaboration.meeting.application.service.*;
+import com.example.meezy.bc.collaboration.meeting.application.service.JoinMeetingService;
+import com.example.meezy.bc.collaboration.meeting.application.service.LeaveMeetingService;
+import com.example.meezy.bc.collaboration.meeting.application.service.QueryMeetingService;
+import com.example.meezy.bc.collaboration.meeting.application.service.ReceiveRecordingService;
+import com.example.meezy.bc.collaboration.meeting.application.service.StartMeetingService;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.request.ReceiveRecordingRequest;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.LeaveResponse;
 import com.example.meezy.bc.collaboration.meeting.application.service.dto.response.MeetingResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -27,7 +36,7 @@ public class MeetingController {
         return startMeetingService.start(teamId);
     }
 
-    //참여 가능한 회의가 존재할 수도 있으며 없을 수도 있으므로, ResponseEntity를 활용하여 안전하게 반환
+    //李몄뿬 媛?ν븳 ?뚯쓽媛 議댁옱???섎룄 ?덉쑝硫??놁쓣 ?섎룄 ?덉쑝誘濡? ResponseEntity瑜??쒖슜?섏뿬 ?덉쟾?섍쾶 諛섑솚
     @GetMapping("/active")
     public ResponseEntity<MeetingResponse> getActiveMeeting(@PathVariable UUID teamId) {
         return queryMeetingService.findActiveMeeting(teamId)
@@ -51,8 +60,7 @@ public class MeetingController {
             @PathVariable UUID meetingId,
             @Valid @ModelAttribute ReceiveRecordingRequest request
     ) {
-        receiveRecordingService.receive(teamId, meetingId, request.file());
+        receiveRecordingService.receive(teamId, meetingId, request.file(), request.title());
         return ResponseEntity.accepted().build();
     }
-
 }

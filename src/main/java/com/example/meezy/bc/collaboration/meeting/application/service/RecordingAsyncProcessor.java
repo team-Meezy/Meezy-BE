@@ -22,27 +22,27 @@ public class RecordingAsyncProcessor {
     private final RecordingFailureReporter recordingFailureReporter;
 
     @Async
-    public void process(UUID teamId, UUID meetingId, Path tempFile) {
-        log.info("녹음 비동기 처리 시작: teamId={}, meetingId={}, tempFile={}", teamId, meetingId, tempFile);
+    public void process(UUID teamId, UUID meetingId, String title, Path tempFile) {
+        log.info("?뱀쓬 鍮꾨룞湲?泥섎━ ?쒖옉: teamId={}, meetingId={}, title={}, tempFile={}", teamId, meetingId, title, tempFile);
         try {
             transactionHandler.validateMeetingOwnership(teamId, meetingId);
 
             String s3Key = audioStoragePort.uploadAudioFromPath(tempFile);
-            log.info("녹음 S3 업로드 완료: meetingId={}, s3Key={}", meetingId, s3Key);
+            log.info("?뱀쓬 S3 ?낅줈???꾨즺: meetingId={}, s3Key={}", meetingId, s3Key);
 
             try {
-                transactionHandler.saveRecording(teamId, meetingId, s3Key);
-                log.info("녹음 비동기 처리 완료: meetingId={}, s3Key={}", meetingId, s3Key);
+                transactionHandler.saveRecording(teamId, meetingId, s3Key, title);
+                log.info("?뱀쓬 鍮꾨룞湲?泥섎━ ?꾨즺: meetingId={}, s3Key={}", meetingId, s3Key);
             } catch (Exception e) {
-                log.error("녹음 DB 저장 실패, 실패 상태 기록: key={}", s3Key, e);
+                log.error("?뱀쓬 DB ????ㅽ뙣, ?ㅽ뙣 ?곹깭 湲곕줉: key={}", s3Key, e);
                 try {
-                    recordingFailureReporter.markFailed(meetingId, s3Key, extractFailureReason(e));
+                    recordingFailureReporter.markFailed(meetingId, s3Key, title, extractFailureReason(e));
                 } catch (Exception failureReportException) {
-                    log.error("녹음 실패 상태 기록 실패: key={}", s3Key, failureReportException);
+                    log.error("?뱀쓬 ?ㅽ뙣 ?곹깭 湲곕줉 ?ㅽ뙣: key={}", s3Key, failureReportException);
                 }
             }
         } catch (Exception e) {
-            log.error("녹음 비동기 처리 실패: meetingId={}", meetingId, e);
+            log.error("?뱀쓬 鍮꾨룞湲?泥섎━ ?ㅽ뙣: meetingId={}", meetingId, e);
         } finally {
             deleteTempFile(tempFile);
         }
@@ -60,7 +60,7 @@ public class RecordingAsyncProcessor {
         try {
             Files.deleteIfExists(tempFile);
         } catch (IOException e) {
-            log.warn("임시 파일 삭제 실패: {}", tempFile, e);
+            log.warn("?꾩떆 ?뚯씪 ??젣 ?ㅽ뙣: {}", tempFile, e);
         }
     }
 }

@@ -27,11 +27,11 @@ public class RecordingTransactionHandler {
     }
 
     @Transactional
-    public void saveRecording(UUID teamId, UUID meetingId, String s3Key) {
+    public void saveRecording(UUID teamId, UUID meetingId, String s3Key, String title) {
         Meeting meeting = meetingRepository.findByMeetingId_Value(meetingId)
                 .orElseThrow(MeetingNotFoundException::new);
         meeting.validateBelongsToTeam(TeamId.of(teamId));
-        meeting.receiveRecording(s3Key);
+        meeting.receiveRecording(s3Key, title);
         meetingRepository.save(meeting);
 
         meeting.pullDomainEvents().forEach(event -> {

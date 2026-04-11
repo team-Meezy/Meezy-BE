@@ -49,7 +49,7 @@ public class QuerySummaryService {
             throw new MeetingReportNotFoundException();
         }
 
-        return SummaryResponse.from(report.getSummary(), teamId);
+        return SummaryResponse.from(report, teamId);
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +63,7 @@ public class QuerySummaryService {
         return meetingReportRepository.findAllByMeetingIdIn(meetingIds).stream()
                 .filter(MeetingReport::isCompleted)
                 .filter(report -> report.getSummary() != null)
-                .map(report -> SummaryResponse.from(report.getSummary(), teamId))
+                .map(report -> SummaryResponse.from(report, teamId))
                 .toList();
     }
 

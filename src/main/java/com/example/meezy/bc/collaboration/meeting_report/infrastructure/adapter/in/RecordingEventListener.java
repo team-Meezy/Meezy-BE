@@ -23,26 +23,26 @@ public class RecordingEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRecordingReceived(RecordingReceivedEvent event) {
-        log.info("회의 리포트 생성 시작: meetingId={}, s3Key={}", event.meetingId(), event.s3Key());
+        log.info("?뚯쓽 由ы룷???앹꽦 ?쒖옉: meetingId={}, s3Key={}", event.meetingId(), event.s3Key());
         try {
-            reportGenerator.markProcessing(event.meetingId(), event.s3Key());
+            reportGenerator.markProcessing(event.meetingId(), event.s3Key(), event.title());
             String transcript = meetingAnalyzerPort.transcribe(event.s3Key());
 
-            reportGenerator.generate(event.meetingId(), transcript);
+            reportGenerator.generate(event.meetingId(), event.title(), transcript);
 
             audioStoragePort.deleteAudio(event.s3Key());
-            log.info("회의 리포트 생성 완료: meetingId={}", event.meetingId());
+            log.info("?뚯쓽 由ы룷???앹꽦 ?꾨즺: meetingId={}", event.meetingId());
         } catch (Exception e) {
             markFailed(event, e);
-            log.error("회의 리포트 생성 실패 (S3 오디오 유지됨): meetingId={}, s3Key={}", event.meetingId(), event.s3Key(), e);
+            log.error("?뚯쓽 由ы룷???앹꽦 ?ㅽ뙣 (S3 ?ㅻ뵒???좎???: meetingId={}, s3Key={}", event.meetingId(), event.s3Key(), e);
         }
     }
 
     private void markFailed(RecordingReceivedEvent event, Exception e) {
         try {
-            reportGenerator.markFailed(event.meetingId(), event.s3Key(), extractFailureReason(e));
+            reportGenerator.markFailed(event.meetingId(), event.s3Key(), event.title(), extractFailureReason(e));
         } catch (Exception markFailedException) {
-            log.error("회의 리포트 실패 상태 저장 실패: meetingId={}", event.meetingId(), markFailedException);
+            log.error("?뚯쓽 由ы룷???ㅽ뙣 ?곹깭 ????ㅽ뙣: meetingId={}", event.meetingId(), markFailedException);
         }
     }
 

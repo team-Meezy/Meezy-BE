@@ -24,7 +24,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReportGenerator 테스트")
+@DisplayName("ReportGenerator tests")
 class ReportGeneratorTest {
 
     @Mock
@@ -40,52 +40,55 @@ class ReportGeneratorTest {
     private String transcript;
     private String summaryContent;
     private String feedbackContent;
+    private String title;
 
     @BeforeEach
     void setUp() {
         meetingId = UUID.randomUUID();
-        transcript = "회의 내용입니다.";
-        summaryContent = "회의 요약입니다.";
-        feedbackContent = "회의 피드백입니다.";
+        transcript = "meeting transcript";
+        summaryContent = "summary content";
+        feedbackContent = "feedback content";
+        title = "Sprint Review";
     }
 
     @Test
-    @DisplayName("리포트를 생성하고 저장한다")
+    @DisplayName("generate saves report with shared title")
     void generate_creates_and_saves_report() {
         given(meetingAnalyzerPort.generateSummary(anyString())).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(anyString())).willReturn(feedbackContent);
         given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
-        reportGenerator.generate(meetingId, transcript);
+        reportGenerator.generate(meetingId, title, transcript);
 
         ArgumentCaptor<MeetingReport> captor = ArgumentCaptor.forClass(MeetingReport.class);
         verify(meetingReportRepository).save(captor.capture());
 
         MeetingReport savedReport = captor.getValue();
         assertThat(savedReport.getMeetingId().value()).isEqualTo(meetingId);
+        assertThat(savedReport.getTitle()).isEqualTo(title);
         assertThat(savedReport.getSummary().getContent()).isEqualTo(summaryContent);
         assertThat(savedReport.getFeedback().getContent()).isEqualTo(feedbackContent);
     }
 
     @Test
-    @DisplayName("요약과 피드백 생성을 위해 MeetingAnalyzerPort를 호출한다")
+    @DisplayName("generate delegates summary and feedback generation")
     void generate_calls_meeting_analyzer_port() {
         given(meetingAnalyzerPort.generateSummary(transcript)).willReturn(summaryContent);
         given(meetingAnalyzerPort.generateFeedback(transcript)).willReturn(feedbackContent);
         given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
-        reportGenerator.generate(meetingId, transcript);
+        reportGenerator.generate(meetingId, title, transcript);
 
         verify(meetingAnalyzerPort).generateSummary(transcript);
         verify(meetingAnalyzerPort).generateFeedback(transcript);
     }
 
     @Test
-    @DisplayName("실패 상태를 저장할 때 sourceAudioKey를 함께 보관한다")
+    @DisplayName("markFailed stores source audio key and title")
     void markFailed_stores_source_audio_key() {
         given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
-        reportGenerator.markFailed(meetingId, "recordings/test.mp3", "stt failed");
+        reportGenerator.markFailed(meetingId, "recordings/test.mp3", title, "stt failed");
 
         ArgumentCaptor<MeetingReport> captor = ArgumentCaptor.forClass(MeetingReport.class);
         verify(meetingReportRepository).save(captor.capture());
@@ -94,14 +97,15 @@ class ReportGeneratorTest {
         assertThat(savedReport.getStatus()).isEqualTo(MeetingReportStatus.FAILED);
         assertThat(savedReport.getFailureReason()).isEqualTo("stt failed");
         assertThat(savedReport.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
+        assertThat(savedReport.getTitle()).isEqualTo(title);
     }
 
     @Test
-    @DisplayName("처리 시작 시 sourceAudioKey를 저장한다")
+    @DisplayName("markProcessing stores source audio key and title")
     void markProcessing_stores_source_audio_key() {
         given(meetingReportRepository.findByMeetingId(any())).willReturn(Optional.empty());
 
-        reportGenerator.markProcessing(meetingId, "recordings/test.mp3");
+        reportGenerator.markProcessing(meetingId, "recordings/test.mp3", title);
 
         ArgumentCaptor<MeetingReport> captor = ArgumentCaptor.forClass(MeetingReport.class);
         verify(meetingReportRepository).save(captor.capture());
@@ -110,5 +114,6 @@ class ReportGeneratorTest {
         assertThat(savedReport.getMeetingId()).isEqualTo(MeetingId.of(meetingId));
         assertThat(savedReport.getStatus()).isEqualTo(MeetingReportStatus.PROCESSING);
         assertThat(savedReport.getSourceAudioKey()).isEqualTo("recordings/test.mp3");
+        assertThat(savedReport.getTitle()).isEqualTo(title);
     }
 }

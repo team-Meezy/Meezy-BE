@@ -53,47 +53,54 @@ public class MeetingReport extends AbstractAggregateRoot {
     @Column(length = 1024)
     private String sourceAudioKey;
 
+    @Column(length = 100)
+    private String title;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public static MeetingReport create(MeetingId meetingId, String summaryContent, String feedbackContent) {
+    public static MeetingReport create(MeetingId meetingId, String title, String summaryContent, String feedbackContent) {
         return MeetingReport.builder()
                 .meetingReportId(MeetingReportId.newId())
                 .meetingId(meetingId)
                 .summary(Summary.create(meetingId, summaryContent))
                 .feedback(Feedback.create(meetingId, feedbackContent))
                 .status(MeetingReportStatus.COMPLETED)
+                .title(normalizeTitle(title))
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    public static MeetingReport createProcessing(MeetingId meetingId) {
-        return createProcessing(meetingId, null);
+    public static MeetingReport createProcessing(MeetingId meetingId, String title) {
+        return createProcessing(meetingId, title, null);
     }
 
-    public static MeetingReport createProcessing(MeetingId meetingId, String sourceAudioKey) {
+    public static MeetingReport createProcessing(MeetingId meetingId, String title, String sourceAudioKey) {
         return MeetingReport.builder()
                 .meetingReportId(MeetingReportId.newId())
                 .meetingId(meetingId)
                 .status(MeetingReportStatus.PROCESSING)
+                .title(normalizeTitle(title))
                 .sourceAudioKey(normalizeSourceAudioKey(sourceAudioKey))
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    public void markProcessing(String sourceAudioKey) {
+    public void markProcessing(String title, String sourceAudioKey) {
         this.summary = null;
         this.feedback = null;
         this.status = MeetingReportStatus.PROCESSING;
         this.failureReason = null;
+        this.title = normalizeTitle(title);
         this.sourceAudioKey = normalizeSourceAudioKey(sourceAudioKey);
     }
 
-    public void complete(String summaryContent, String feedbackContent) {
+    public void complete(String title, String summaryContent, String feedbackContent) {
         this.summary = Summary.create(meetingId, summaryContent);
         this.feedback = Feedback.create(meetingId, feedbackContent);
         this.status = MeetingReportStatus.COMPLETED;
         this.failureReason = null;
+        this.title = normalizeTitle(title);
     }
 
     public void fail(String reason) {
@@ -123,11 +130,22 @@ public class MeetingReport extends AbstractAggregateRoot {
         this.sourceAudioKey = normalizeSourceAudioKey(sourceAudioKey);
     }
 
+    public void updateTitle(String title) {
+        this.title = normalizeTitle(title);
+    }
+
     private String truncate(String reason) {
         if (reason == null || reason.isBlank()) {
             return null;
         }
         return reason.length() <= 1000 ? reason : reason.substring(0, 1000);
+    }
+
+    private static String normalizeTitle(String title) {
+        if (title == null || title.isBlank()) {
+            return null;
+        }
+        return title.length() <= 100 ? title : title.substring(0, 100);
     }
 
     private static String normalizeSourceAudioKey(String sourceAudioKey) {

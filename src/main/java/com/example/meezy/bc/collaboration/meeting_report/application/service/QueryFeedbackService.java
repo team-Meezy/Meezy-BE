@@ -49,7 +49,7 @@ public class QueryFeedbackService {
             throw new MeetingReportNotFoundException();
         }
 
-        return FeedbackResponse.from(report.getFeedback(), teamId);
+        return FeedbackResponse.from(report, teamId);
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +63,7 @@ public class QueryFeedbackService {
         return meetingReportRepository.findAllByMeetingIdIn(meetingIds).stream()
                 .filter(MeetingReport::isCompleted)
                 .filter(report -> report.getFeedback() != null)
-                .map(report -> FeedbackResponse.from(report.getFeedback(), teamId))
+                .map(report -> FeedbackResponse.from(report, teamId))
                 .toList();
     }
 

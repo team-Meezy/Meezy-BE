@@ -25,14 +25,15 @@ public class ReceiveRecordingService {
     private final CurrentUserQuery currentUserQuery;
     private final TeamRepository teamRepository;
 
-    public void receive(UUID teamId, UUID meetingId, MultipartFile recording) {
+    public void receive(UUID teamId, UUID meetingId, MultipartFile recording, String title) {
         log.info(
-                "녹음 업로드 요청 수신: teamId={}, meetingId={}, filename={}, size={}, contentType={}",
+                "?뱀쓬 ?낅줈???붿껌 ?섏떊: teamId={}, meetingId={}, filename={}, size={}, contentType={}, title={}",
                 teamId,
                 meetingId,
                 recording != null ? recording.getOriginalFilename() : null,
                 recording != null ? recording.getSize() : null,
-                recording != null ? recording.getContentType() : null
+                recording != null ? recording.getContentType() : null,
+                title
         );
 
         UserId currentUserId = currentUserQuery.currentUser().userId();
@@ -41,8 +42,8 @@ public class ReceiveRecordingService {
         transactionHandler.validateMeetingOwnership(teamId, meetingId);
 
         Path tempFile = extractTempFilePath(recording);
-        asyncProcessor.process(teamId, meetingId, tempFile);
-        log.info("녹음 업로드 비동기 처리 위임 완료: teamId={}, meetingId={}", teamId, meetingId);
+        asyncProcessor.process(teamId, meetingId, title, tempFile);
+        log.info("?뱀쓬 ?낅줈??鍮꾨룞湲?泥섎━ ?꾩엫 ?꾨즺: teamId={}, meetingId={}", teamId, meetingId);
     }
 
     private void validateTeamMembership(UUID teamId, UserId userId) {
@@ -57,7 +58,7 @@ public class ReceiveRecordingService {
             recording.transferTo(tempFile);
             return tempFile.toPath();
         } catch (Exception e) {
-            throw new RuntimeException("임시 파일 저장 실패", e);
+            throw new RuntimeException("?꾩떆 ?뚯씪 ????ㅽ뙣", e);
         }
     }
 

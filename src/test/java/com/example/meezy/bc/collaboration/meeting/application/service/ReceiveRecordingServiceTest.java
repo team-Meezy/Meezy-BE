@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReceiveRecordingService 테스트")
+@DisplayName("ReceiveRecordingService tests")
 class ReceiveRecordingServiceTest {
 
     @Mock
@@ -65,7 +66,7 @@ class ReceiveRecordingServiceTest {
     }
 
     @Test
-    @DisplayName("비동기 위임 전에 회의 소속을 동기 검증한다")
+    @DisplayName("validates meeting ownership before delegating async processing")
     void receive_validates_meeting_before_async_processing() throws Exception {
         MockMultipartFile recording = new MockMultipartFile(
                 "file",
@@ -76,17 +77,18 @@ class ReceiveRecordingServiceTest {
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
         given(teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)).willReturn(true);
 
-        receiveRecordingService.receive(teamId, meetingId, recording);
+        receiveRecordingService.receive(teamId, meetingId, recording, "Sprint Review");
 
         verify(transactionHandler).validateMeetingOwnership(teamId, meetingId);
 
         ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
-        verify(asyncProcessor).process(eq(teamId), eq(meetingId), pathCaptor.capture());
+        verify(asyncProcessor).process(eq(teamId), eq(meetingId), eq("Sprint Review"), pathCaptor.capture());
+        assertThat(Files.exists(pathCaptor.getValue())).isTrue();
         Files.deleteIfExists(pathCaptor.getValue());
     }
 
     @Test
-    @DisplayName("팀 멤버가 아니면 업로드를 진행하지 않는다")
+    @DisplayName("rejects uploads from non-team members")
     void receive_throws_when_not_team_member() {
         MockMultipartFile recording = new MockMultipartFile(
                 "file",
@@ -97,15 +99,15 @@ class ReceiveRecordingServiceTest {
         given(currentUserQuery.currentUser()).willReturn(authenticatedUser);
         given(teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)).willReturn(false);
 
-        assertThatThrownBy(() -> receiveRecordingService.receive(teamId, meetingId, recording))
+        assertThatThrownBy(() -> receiveRecordingService.receive(teamId, meetingId, recording, "Sprint Review"))
                 .isInstanceOf(NotTeamMemberException.class);
 
         verify(transactionHandler, never()).validateMeetingOwnership(any(), any());
-        verify(asyncProcessor, never()).process(any(), any(), any());
+        verify(asyncProcessor, never()).process(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("회의 검증이 실패하면 비동기 처리를 시작하지 않는다")
+    @DisplayName("does not start async processing when meeting validation fails")
     void receive_throws_when_meeting_validation_fails() {
         MockMultipartFile recording = new MockMultipartFile(
                 "file",
@@ -117,9 +119,9 @@ class ReceiveRecordingServiceTest {
         given(teamRepository.existsMemberByTeamIdAndUserId(teamId, userId)).willReturn(true);
         doThrow(new MeetingNotFoundException()).when(transactionHandler).validateMeetingOwnership(teamId, meetingId);
 
-        assertThatThrownBy(() -> receiveRecordingService.receive(teamId, meetingId, recording))
+        assertThatThrownBy(() -> receiveRecordingService.receive(teamId, meetingId, recording, "Sprint Review"))
                 .isInstanceOf(MeetingNotFoundException.class);
 
-        verify(asyncProcessor, never()).process(any(), any(), any());
+        verify(asyncProcessor, never()).process(any(), any(), any(), any());
     }
 }
